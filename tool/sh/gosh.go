@@ -3,10 +3,12 @@ package sh
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"golang.org/x/term"
@@ -15,8 +17,15 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
+// Gosh executes a script passed via the command line "-c" flag or script files
+// provided in the arguments list. If no arguments are provided, it will
+// execute in interactive mode if standard input supports it.
+// This function manages errors and exits appropriately.
 func Gosh(vs *VirtualSystem, args []string) {
-	err := runAll(vs, args)
+	var script = flag.String("c", "", "script to be executed")
+	flag.Parse()
+
+	err := runAll(vs, args, script)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
 		vs.System.Exit(int(es))
@@ -27,7 +36,7 @@ func Gosh(vs *VirtualSystem, args []string) {
 	}
 }
 
-func runAll(vs *VirtualSystem, args []string) error {
+func runAll(vs *VirtualSystem, args []string, script *string) error {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	r, err := NewRunner(vs, interp.Interactive(true))
@@ -35,6 +44,9 @@ func runAll(vs *VirtualSystem, args []string) error {
 		return err
 	}
 
+	if *script != "" {
+		return run(ctx, r, strings.NewReader(*script), "")
+	}
 	if len(args) == 0 {
 		if term.IsTerminal(int(vs.IOE[0].Fd())) {
 			return runInteractive(vs, ctx, r)
@@ -47,7 +59,6 @@ func runAll(vs *VirtualSystem, args []string) error {
 		}
 	}
 	return nil
-
 }
 
 func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) error {
@@ -60,7 +71,6 @@ func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) e
 }
 
 func runPath(vs *VirtualSystem, ctx context.Context, r *interp.Runner, path string) error {
-	// f, err := os.Open(path)
 	f, err := vs.Workspace.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
 		return err

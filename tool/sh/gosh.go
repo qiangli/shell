@@ -31,7 +31,7 @@ func Gosh(vs *VirtualSystem, args []string) {
 		vs.System.Exit(int(es))
 	}
 	if err != nil {
-		fmt.Fprintln(vs.IOE[2], err)
+		fmt.Fprintln(vs.IOE.Stderr, err)
 		vs.System.Exit(1)
 	}
 }
@@ -48,10 +48,12 @@ func runAll(vs *VirtualSystem, args []string, script *string) error {
 		return run(ctx, r, strings.NewReader(*script), "")
 	}
 	if len(args) == 0 {
-		if term.IsTerminal(int(vs.IOE[0].Fd())) {
-			return runInteractive(vs, ctx, r)
+		if file, ok := vs.IOE.Stdin.(*os.File); ok {
+			if term.IsTerminal(int(file.Fd())) {
+				return runInteractive(vs, ctx, r)
+			}
 		}
-		return run(ctx, r, vs.IOE[0], "")
+		return run(ctx, r, vs.IOE.Stdin, "")
 	}
 	for _, path := range args {
 		if err := runPath(vs, ctx, r, path); err != nil {
@@ -82,24 +84,24 @@ func runPath(vs *VirtualSystem, ctx context.Context, r *interp.Runner, path stri
 func runInteractive(vs *VirtualSystem, ctx context.Context, r *interp.Runner) error {
 	parser := syntax.NewParser()
 
-	fmt.Fprintf(vs.IOE[1], "$ ")
-	err := parser.Interactive(vs.IOE[0], func(stmts []*syntax.Stmt) bool {
+	fmt.Fprintf(vs.IOE.Stdout, "$ ")
+	err := parser.Interactive(vs.IOE.Stdin, func(stmts []*syntax.Stmt) bool {
 		if parser.Incomplete() {
-			fmt.Fprintf(vs.IOE[1], "> ")
+			fmt.Fprintf(vs.IOE.Stdout, "> ")
 			return true
 		}
 		// run
 		for _, stmt := range stmts {
 			err := r.Run(ctx, stmt)
 			if err != nil {
-				fmt.Fprint(vs.IOE[2], err.Error())
+				fmt.Fprint(vs.IOE.Stderr, err.Error())
 			}
 			if r.Exited() {
 				vs.System.Exit(0)
 				return true
 			}
 		}
-		fmt.Fprintf(vs.IOE[1], "$ ")
+		fmt.Fprintf(vs.IOE.Stdout, "$ ")
 		return true
 	})
 	return err

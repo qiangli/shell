@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	ioe := [3]*os.File{os.Stdin, os.Stdout, os.Stderr}
+	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
 	args := os.Args[1:]
 	sh.Gosh(sh.NewLocalSystem(ioe), args)
 }

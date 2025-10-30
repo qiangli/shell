@@ -19,13 +19,21 @@ import (
 	"github.com/qiangli/shell/tool/sh/vos"
 )
 
+// standard IO
+type IOE struct {
+	Stdin  io.Reader
+	Stdout io.Writer
+	Stderr io.Writer
+}
+
 type VirtualSystem struct {
-	IOE       [3]*os.File
+	IOE *IOE
+
 	Workspace vfs.Workspace
 	System    vos.System
 }
 
-func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe [3]*os.File) *VirtualSystem {
+func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 	return &VirtualSystem{
 		System:    s,
 		Workspace: ws,
@@ -33,7 +41,7 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe [3]*os.File) *VirtualS
 	}
 }
 
-func NewLocalSystem(ioe [3]*os.File) *VirtualSystem {
+func NewLocalSystem(ioe *IOE) *VirtualSystem {
 	return NewVirtualSystem(vos.NewLocalSystem(), vfs.NewLocalFS(), ioe)
 }
 
@@ -187,7 +195,7 @@ func NewRunner(vs *VirtualSystem, opts ...interp.RunnerOption) (*interp.Runner, 
 	if err := interp.Dir(dir)(r); err != nil {
 		return nil, err
 	}
-	interp.StdIO(vs.IOE[0], vs.IOE[1], vs.IOE[2])(r)
+	interp.StdIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)(r)
 
 	//
 	wrapped := func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {

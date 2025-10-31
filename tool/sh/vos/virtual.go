@@ -1,90 +1,112 @@
 package vos
 
 import (
-	// "bytes"
-	// "fmt"
+	"encoding/json"
+	"fmt"
+	"maps"
 	"os"
 	"os/exec"
-	// "strings"
+	"path/filepath"
+	"reflect"
+	"sync"
 )
 
-// System represents the virtual operating system for the tool.
-// It provides the system operations that can be mocked for testing.
 type System interface {
-	// Man(string) (string, error)
-
 	Command(name string, arg ...string) *exec.Cmd
-
 	Chdir(dir string) error
 	Getwd() (string, error)
-
 	Environ() []string
 	Getenv(string) string
 	Setenv(string, string)
-
 	Exit(int)
 }
 
 type LocalSystem struct {
+	root string
+	dir  string
+	env  map[string]any
+	mu   sync.RWMutex
 }
 
-func NewLocalSystem() *LocalSystem {
-	return &LocalSystem{}
+func NewLocalSystem(root string) *LocalSystem {
+	dir, _ := os.Getwd()
+	if v, err := filepath.Rel(root, dir); err != nil {
+		dir = ""
+	} else {
+		dir = v
+	}
+	return &LocalSystem{
+		root: root,
+		dir:  dir,
+		env:  make(map[string]any),
+	}
 }
 
 func (s *LocalSystem) Command(name string, arg ...string) *exec.Cmd {
-	return exec.Command(name, arg...)
+	e := exec.Command(name, arg...)
+	e.Env = s.Env()
+	e.Dir = s.dir
+	return e
 }
 
 func (s *LocalSystem) Chdir(dir string) error {
-	return os.Chdir(dir)
+	abs := filepath.Join(s.root, dir)
+	if info, err := os.Stat(abs); err != nil || !info.IsDir() {
+		return fmt.Errorf("invalid directory: %v", err)
+	}
+	s.dir = dir
+	return nil
 }
 
 func (s *LocalSystem) Getwd() (string, error) {
-	return os.Getwd()
+	return s.dir, nil
 }
 
-// func (s *LocalSystem) Man(bin string) (string, error) {
-// 	command := strings.TrimSpace(strings.SplitN(bin, " ", 2)[0])
-// 	manCmd := s.Command("man", command)
-// 	var manOutput bytes.Buffer
-
-// 	// Capture the output of the man command.
-// 	manCmd.Stdout = &manOutput
-// 	manCmd.Stderr = &manOutput
-
-// 	if err := manCmd.Run(); err != nil {
-// 		return "", fmt.Errorf("error running man command: %v\nOutput: %s", err, manOutput.String())
-// 	}
-
-// 	// Process with 'col' to remove formatting
-// 	colCmd := s.Command("col", "-b")
-// 	var colOutput bytes.Buffer
-
-// 	colCmd.Stdin = bytes.NewReader(manOutput.Bytes())
-// 	colCmd.Stdout = &colOutput
-// 	colCmd.Stderr = &colOutput
-
-// 	// Try running 'col', if it fails, return the man output instead.
-// 	if err := colCmd.Run(); err != nil {
-// 		return manOutput.String(), nil
-// 	}
-
-// 	return colOutput.String(), nil
-// }
-
-func (s *LocalSystem) Environ() []string {
-	return os.Environ()
+func (s *LocalSystem) Env() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var env []string
+	for k, v := range s.env {
+		kv := fmt.Sprintf("%s=%v", k, stringify(v))
+		env = append(env, kv)
+	}
+	return env
 }
 
-func (s *LocalSystem) Getenv(key string) string {
-	return os.Getenv(key)
+func stringify(v interface{}) string {
+	val := reflect.ValueOf(v)
+	switch val.Kind() {
+	case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
+		return fmt.Sprintf("%v", v)
+	default:
+		jsonStr, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("error: %+v", err)
+		}
+		return string(jsonStr)
+	}
 }
 
-func (s *LocalSystem) Setenv(key string, value string) {
-	os.Setenv(key, value)
+func (s *LocalSystem) Environ() map[string]any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	env := make(map[string]any)
+	maps.Copy(env, s.env)
+	return env
+}
+
+func (s *LocalSystem) Getenv(key string) any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.env[key]
+}
+
+func (s *LocalSystem) Setenv(key string, value any) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.env[key] = value
 }
 
 func (s *LocalSystem) Exit(code int) {
-	os.Exit(code)
+	// os.Exit(code)
 }

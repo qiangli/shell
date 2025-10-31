@@ -42,7 +42,7 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 }
 
 func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
-	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(), ioe)
+	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
 }
 
 func VirtualOpenHandler(ws vfs.Workspace) interp.OpenHandlerFunc {

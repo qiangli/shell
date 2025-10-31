@@ -29,6 +29,6 @@ func main() {
 		os.Exit(code)
 	}
 	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	vs := sh.NewVirtualSystem(ls, vfs.NewLocalFS(), ioe)
+	vs := sh.NewVirtualSystem(ls, vfs.NewLocalFS(*root), ioe)
 	sh.Gosh(vs, *script)
 }

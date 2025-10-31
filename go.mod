@@ -7,6 +7,7 @@ toolchain go1.24.9
 require (
 	github.com/c2fo/vfs/v7 v7.10.0
 	github.com/qiangli/filesearch v0.0.0-20250727212022-dcfddd1c92de
+	golang.org/x/sys v0.36.0
 	golang.org/x/term v0.35.0
 	mvdan.cc/sh/v3 v3.12.0
 )
@@ -90,7 +91,6 @@ require (
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
 	google.golang.org/api v0.252.0 // indirect

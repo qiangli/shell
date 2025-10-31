@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Local fs is a workspace
@@ -13,6 +14,7 @@ type LocalFS struct {
 }
 
 func NewLocalFS(root string) Workspace {
+	root = filepath.Clean(root)
 	return &LocalFS{
 		root: root,
 	}
@@ -100,11 +102,15 @@ func (s *LocalFS) Locator(path string) (string, error) {
 }
 
 func (s *LocalFS) validatePath(path string) (string, error) {
-	abs, err := filepath.Abs(filepath.Join(s.root, path))
+	path = filepath.Clean(path)
+	if !strings.HasPrefix(path, s.root) {
+		return "", fmt.Errorf("invalid local fs path: %s", path)
+	}
+	rel := strings.TrimPrefix(path, s.root)
+	abs, err := filepath.Abs(filepath.Join(s.root, rel))
 	if err != nil {
 		return "", fmt.Errorf("invalid path %q: %w", path, err)
 	}
-
 	return abs, nil
 }
 

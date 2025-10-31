@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -24,7 +25,7 @@ type LocalSystem struct {
 func NewLocalSystem(root string) *LocalSystem {
 	return &LocalSystem{
 		root: root,
-		dir:  "",
+		dir:  root,
 		env:  make(map[string]any),
 	}
 }
@@ -36,16 +37,33 @@ func (s *LocalSystem) Command(name string, arg ...string) *exec.Cmd {
 	return e
 }
 
-func (s *LocalSystem) Chdir(dir string) error {
-	abs := filepath.Join(s.root, dir)
+func (s *LocalSystem) validatePath(path string) (string, error) {
+	path = filepath.Clean(path)
+	if !strings.HasPrefix(path, s.root) {
+		return "", fmt.Errorf("invalid local fs path: %s", path)
+	}
+	rel := strings.TrimPrefix(path, s.root)
+	abs, err := filepath.Abs(filepath.Join(s.root, rel))
+	if err != nil {
+		return "", fmt.Errorf("invalid path %q: %w", path, err)
+	}
+	return abs, nil
+}
+
+func (s *LocalSystem) Chdir(path string) error {
+	abs, err := s.validatePath(path)
+	if err != nil {
+		return err
+	}
 	if info, err := os.Stat(abs); err != nil || !info.IsDir() {
 		return fmt.Errorf("invalid directory: %v", err)
 	}
-	s.dir = dir
-	return nil
+	s.dir = abs
+	return os.Chdir(abs)
 }
 
 func (s *LocalSystem) Getwd() (string, error) {
+	// return os.Getwd()
 	return s.dir, nil
 }
 

@@ -26,11 +26,21 @@ type IOE struct {
 	Stderr io.Writer
 }
 
+type ExecHandler func(context.Context, []string) (bool, error)
+
 type VirtualSystem struct {
 	IOE *IOE
 
 	Workspace vfs.Workspace
 	System    vos.System
+
+	ExecHandler ExecHandler
+
+	MaxTimeout int
+}
+
+func (s *VirtualSystem) Run(script string) error {
+	return runAll(s, script)
 }
 
 func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
@@ -43,6 +53,17 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 
 func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
 	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
+}
+
+func NewDummyExecHandler(ioe *IOE) ExecHandler {
+	return func(ctx context.Context, args []string) (bool, error) {
+		fmt.Fprintf(ioe.Stderr, "args: %+v\n", args)
+		if args[0] == "ai" || strings.HasPrefix(args[0], "@") {
+			fmt.Fprintf(ioe.Stdout, "ai args: %+v\n", args)
+			return true, nil
+		}
+		return false, nil
+	}
 }
 
 func VirtualOpenHandler(ws vfs.Workspace) interp.OpenHandlerFunc {
@@ -106,21 +127,18 @@ func execEnv(env expand.Environ) []string {
 	return list
 }
 
-func VirtualExecHandler(vs *VirtualSystem, killTimeout time.Duration) interp.ExecHandlerFunc {
-	return func(ctx context.Context, args []string) error {
+func VirtualExecHandler(vs *VirtualSystem) func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
+	var killTimeout = 15 * time.Minute
+	if vs.MaxTimeout > 0 {
+		killTimeout = time.Duration(vs.MaxTimeout)
+	}
+	handle := func(ctx context.Context, args []string) error {
 		hc := interp.HandlerCtx(ctx)
-		// path, err := interp.LookPathDir(hc.Dir, hc.Env, args[0])
-		// if err != nil {
-		// 	fmt.Fprintln(hc.Stderr, err)
-		// 	return interp.ExitStatus(127)
-		// }
-		//
-		cmd := vs.System.Command(args[0], args...)
-		cmd.Env = execEnv(hc.Env)
-		cmd.Dir = hc.Dir
-		cmd.Stdin = hc.Stdin
-		cmd.Stdout = hc.Stdout
-		cmd.Stderr = hc.Stderr
+		path, err := interp.LookPathDir(hc.Dir, hc.Env, args[0])
+		if err != nil {
+			fmt.Fprintln(hc.Stderr, err)
+			return interp.ExitStatus(127)
+		}
 
 		// cmd := exec.Cmd{
 		// 	Path:   path,
@@ -132,18 +150,30 @@ func VirtualExecHandler(vs *VirtualSystem, killTimeout time.Duration) interp.Exe
 		// 	Stderr: hc.Stderr,
 		// }
 
-		err := cmd.Start()
+		// cmd := vs.System.Command(args[0], args[1:]...)
+		cmd := vs.System.Command(path)
+		cmd.Path = path
+		cmd.Args = args
+		cmd.Env = execEnv(hc.Env)
+		cmd.Dir = hc.Dir
+		cmd.Stdin = hc.Stdin
+		cmd.Stdout = hc.Stdout
+		cmd.Stderr = hc.Stderr
+
+		prepareCommand(cmd)
+
+		err = cmd.Start()
 		if err == nil {
 			stopf := context.AfterFunc(ctx, func() {
 				if killTimeout <= 0 || runtime.GOOS == "windows" {
-					_ = cmd.Process.Signal(os.Kill)
+					_ = killCommand(cmd)
 					return
 				}
-				_ = cmd.Process.Signal(os.Interrupt)
+				_ = interruptCommand(cmd)
 				// TODO: don't sleep in this goroutine if the program
 				// stops itself with the interrupt above.
 				time.Sleep(killTimeout)
-				_ = cmd.Process.Signal(os.Kill)
+				_ = killCommand(cmd)
 			})
 			defer stopf()
 
@@ -152,15 +182,15 @@ func VirtualExecHandler(vs *VirtualSystem, killTimeout time.Duration) interp.Exe
 
 		switch err := err.(type) {
 		case *exec.ExitError:
-			// // Windows and Plan9 do not have support for [syscall.WaitStatus]
-			// // with methods like Signaled and Signal, so for those, [waitStatus] is a no-op.
-			// // Note: [waitStatus] is an alias [syscall.WaitStatus]
-			// if status, ok := err.Sys().(waitStatus); ok && status.Signaled() {
-			// 	if ctx.Err() != nil {
-			// 		return ctx.Err()
-			// 	}
-			// 	return interp.ExitStatus(128 + status.Signal())
-			// }
+			// Windows and Plan9 do not have support for [syscall.WaitStatus]
+			// with methods like Signaled and Signal, so for those, [waitStatus] is a no-op.
+			// Note: [waitStatus] is an alias [syscall.WaitStatus]
+			if status, ok := err.Sys().(waitStatus); ok && status.Signaled() {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				return interp.ExitStatus(128 + status.Signal())
+			}
 			return interp.ExitStatus(err.ExitCode())
 		case *exec.Error:
 			// did not start
@@ -168,6 +198,15 @@ func VirtualExecHandler(vs *VirtualSystem, killTimeout time.Duration) interp.Exe
 			return interp.ExitStatus(127)
 		default:
 			return err
+		}
+	}
+
+	return func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
+		return func(ctx context.Context, args []string) error {
+			if err := handle(ctx, args); err != nil {
+				return err
+			}
+			return next(ctx, args)
 		}
 	}
 }
@@ -197,16 +236,29 @@ func NewRunner(vs *VirtualSystem, opts ...interp.RunnerOption) (*interp.Runner, 
 	}
 	interp.StdIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)(r)
 
-	//
-	wrapped := func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
-		eh := VirtualExecHandler(vs, 15*time.Minute)
+	// exec handlers
+	wrap := func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
 		return func(ctx context.Context, args []string) error {
-			if err := eh(ctx, args); err != nil {
-				return err
+			if vs.ExecHandler != nil {
+				done, err := vs.ExecHandler(ctx, args)
+				if done {
+					return nil
+				}
+				if err != nil {
+					return err
+				}
 			}
 			return next(ctx, args)
 		}
 	}
-	interp.ExecHandlers(wrapped)(r)
+	var middlewares = []func(interp.ExecHandlerFunc) interp.ExecHandlerFunc{
+		// custom handler
+		wrap,
+		// default bash handler
+		VirtualExecHandler(vs),
+	}
+	if err := interp.ExecHandlers(middlewares...)(r); err != nil {
+		return nil, err
+	}
 	return r, nil
 }

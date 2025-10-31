@@ -21,7 +21,8 @@ import (
 // if standard input supports it.
 // This function manages errors and exits appropriately.
 func Gosh(vs *VirtualSystem, script string) {
-	err := runAll(vs, script)
+	// err := runAll(vs, script)
+	err := vs.Run(script)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
 		vs.System.Exit(int(es))
@@ -74,7 +75,7 @@ func runInteractive(vs *VirtualSystem, ctx context.Context, r *interp.Runner) er
 		for _, stmt := range stmts {
 			err := r.Run(ctx, stmt)
 			if err != nil {
-				fmt.Fprint(vs.IOE.Stderr, err.Error())
+				fmt.Fprintf(vs.IOE.Stderr, "error: %s\n", err.Error())
 			}
 			if r.Exited() {
 				vs.System.Exit(0)

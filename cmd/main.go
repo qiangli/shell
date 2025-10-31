@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/qiangli/shell/tool/sh"
 	"github.com/qiangli/shell/tool/sh/vfs"
@@ -11,24 +12,29 @@ import (
 )
 
 func main() {
-	var script = flag.String("c", "", "script to be executed")
-	var root = flag.String("root", "", "Specify the root directory")
+	var scriptptr = flag.String("c", "", "script to be executed")
+	var rootptr = flag.String("root", "", "Specify the root directory")
 	flag.Parse()
 
-	// args := flag.Args()
-	if *root != "" {
-		if err := os.Chdir(*root); err != nil {
-			fmt.Printf("%v", err)
-			os.Exit(1)
-		}
+	var script = *scriptptr
+	var root = *rootptr
+
+	if root == "" {
+		root, _ = os.Getwd()
 	}
 
-	ls := vos.NewLocalSystem(*root)
+	root, _ = filepath.Abs(root)
+	if err := os.Chdir(root); err != nil {
+		fmt.Printf("%v", err)
+		os.Exit(1)
+	}
+
+	ls := vos.NewLocalSystem(root)
 	ls.Exitf = func(code int) {
 		fmt.Printf("exit %v\n", code)
 		os.Exit(code)
 	}
 	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	vs := sh.NewVirtualSystem(ls, vfs.NewLocalFS(*root), ioe)
-	sh.Gosh(vs, *script)
+	vs := sh.NewVirtualSystem(ls, vfs.NewLocalFS(root), ioe)
+	sh.Gosh(vs, script)
 }

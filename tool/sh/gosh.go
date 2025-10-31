@@ -3,7 +3,6 @@ package sh
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -17,15 +16,12 @@ import (
 	"mvdan.cc/sh/v3/syntax"
 )
 
-// Gosh executes a script passed via the command line "-c" flag or script files
-// provided in the arguments list. If no arguments are provided, it will
-// execute in interactive mode if standard input supports it.
+// Gosh executes a script provided in the argument.
+// If no arguments are provided, it will execute in interactive mode
+// if standard input supports it.
 // This function manages errors and exits appropriately.
-func Gosh(vs *VirtualSystem, args []string) {
-	var script = flag.String("c", "", "script to be executed")
-	flag.Parse()
-
-	err := runAll(vs, args, script)
+func Gosh(vs *VirtualSystem, script string) {
+	err := runAll(vs, script)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
 		vs.System.Exit(int(es))
@@ -36,7 +32,7 @@ func Gosh(vs *VirtualSystem, args []string) {
 	}
 }
 
-func runAll(vs *VirtualSystem, args []string, script *string) error {
+func runAll(vs *VirtualSystem, script string) error {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
 	r, err := NewRunner(vs, interp.Interactive(true))
@@ -44,23 +40,16 @@ func runAll(vs *VirtualSystem, args []string, script *string) error {
 		return err
 	}
 
-	if *script != "" {
-		return run(ctx, r, strings.NewReader(*script), "")
+	if script != "" {
+		return run(ctx, r, strings.NewReader(script), "")
 	}
-	if len(args) == 0 {
-		if file, ok := vs.IOE.Stdin.(*os.File); ok {
-			if term.IsTerminal(int(file.Fd())) {
-				return runInteractive(vs, ctx, r)
-			}
-		}
-		return run(ctx, r, vs.IOE.Stdin, "")
-	}
-	for _, path := range args {
-		if err := runPath(vs, ctx, r, path); err != nil {
-			return err
+
+	if file, ok := vs.IOE.Stdin.(*os.File); ok {
+		if term.IsTerminal(int(file.Fd())) {
+			return runInteractive(vs, ctx, r)
 		}
 	}
-	return nil
+	return run(ctx, r, vs.IOE.Stdin, "")
 }
 
 func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) error {
@@ -70,15 +59,6 @@ func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) e
 	}
 	r.Reset()
 	return r.Run(ctx, prog)
-}
-
-func runPath(vs *VirtualSystem, ctx context.Context, r *interp.Runner, path string) error {
-	f, err := vs.Workspace.OpenFile(path, os.O_RDONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return run(ctx, r, f, path)
 }
 
 func runInteractive(vs *VirtualSystem, ctx context.Context, r *interp.Runner) error {

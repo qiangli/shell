@@ -15,9 +15,10 @@ type System interface {
 	Command(name string, arg ...string) *exec.Cmd
 	Chdir(dir string) error
 	Getwd() (string, error)
-	Environ() []string
-	Getenv(string) string
-	Setenv(string, string)
+	Env() []string
+	Environ() map[string]any
+	Getenv(string) any
+	Setenv(string, any)
 	Exit(int)
 }
 
@@ -26,18 +27,15 @@ type LocalSystem struct {
 	dir  string
 	env  map[string]any
 	mu   sync.RWMutex
+
+	// exit call back
+	Exitf func(int)
 }
 
 func NewLocalSystem(root string) *LocalSystem {
-	dir, _ := os.Getwd()
-	if v, err := filepath.Rel(root, dir); err != nil {
-		dir = ""
-	} else {
-		dir = v
-	}
 	return &LocalSystem{
 		root: root,
-		dir:  dir,
+		dir:  "",
 		env:  make(map[string]any),
 	}
 }
@@ -62,6 +60,11 @@ func (s *LocalSystem) Getwd() (string, error) {
 	return s.dir, nil
 }
 
+// Env returns all environment variables as a name=value list.
+// It converts complex and nested data structures into a JSON string
+// representation when necessary.
+// For basic types such as strings, integers, floats, and booleans,
+// a direct conversion to a string format is applied.
 func (s *LocalSystem) Env() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -87,6 +90,7 @@ func stringify(v interface{}) string {
 	}
 }
 
+// Return all environment variables as a map.
 func (s *LocalSystem) Environ() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -108,5 +112,7 @@ func (s *LocalSystem) Setenv(key string, value any) {
 }
 
 func (s *LocalSystem) Exit(code int) {
-	// os.Exit(code)
+	if s.Exitf != nil {
+		s.Exitf(code)
+	}
 }

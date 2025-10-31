@@ -41,8 +41,8 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 	}
 }
 
-func NewLocalSystem(ioe *IOE) *VirtualSystem {
-	return NewVirtualSystem(vos.NewLocalSystem(), vfs.NewLocalFS(), ioe)
+func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
+	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(), ioe)
 }
 
 func VirtualOpenHandler(ws vfs.Workspace) interp.OpenHandlerFunc {
@@ -183,7 +183,7 @@ func NewRunner(vs *VirtualSystem, opts ...interp.RunnerOption) (*interp.Runner, 
 	interp.StatHandler(VirtualStatHandler(vs.Workspace))(r)
 
 	//
-	var env = vs.System.Environ()
+	var env = vs.System.Env()
 	if len(env) > 0 {
 		interp.Env(expand.ListEnviron(env...))(r)
 	}

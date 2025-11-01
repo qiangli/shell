@@ -7,62 +7,40 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
+	"mvdan.cc/sh/v3/syntax"
 
 	"github.com/qiangli/shell/tool/sh/vfs"
-	"github.com/qiangli/shell/tool/sh/vos"
 )
 
-// standard IO
-type IOE struct {
-	Stdin  io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
-}
-
-type ExecHandler func(context.Context, []string) (bool, error)
-
-type VirtualSystem struct {
-	IOE *IOE
-
-	Workspace vfs.Workspace
-	System    vos.System
-
-	ExecHandler ExecHandler
-
-	MaxTimeout int
-}
-
-func (s *VirtualSystem) Run(script string) error {
-	return runAll(s, script)
-}
-
-func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
-	return &VirtualSystem{
-		System:    s,
-		Workspace: ws,
-		IOE:       ioe,
-	}
-}
-
-func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
-	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
-}
-
-func NewDummyExecHandler(ioe *IOE) ExecHandler {
+func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 	return func(ctx context.Context, args []string) (bool, error) {
-		fmt.Fprintf(ioe.Stderr, "args: %+v\n", args)
+		fmt.Fprintf(vs.IOE.Stderr, "args: %+v\n", args)
 		if args[0] == "ai" || strings.HasPrefix(args[0], "@") {
-			fmt.Fprintf(ioe.Stdout, "ai args: %+v\n", args)
+			fmt.Fprintf(vs.IOE.Stdout, "ai args: %+v\n", args)
 			return true, nil
 		}
-		return false, nil
+
+		// allow bash built in
+		if interp.IsBuiltin(args[0]) {
+			return false, nil
+		}
+		// bash
+		if IsShell(args[0]) {
+			err := Gosh(ctx, vs, args)
+			return true, err
+		}
+
+		// block other commands
+		return true, nil
 	}
 }
 
@@ -211,54 +189,21 @@ func VirtualExecHandler(vs *VirtualSystem) func(next interp.ExecHandlerFunc) int
 	}
 }
 
-func NewRunner(vs *VirtualSystem, opts ...interp.RunnerOption) (*interp.Runner, error) {
-	r, err := interp.New(opts...)
+func IsShell(s string) bool {
+	if slices.Contains([]string{"bash", "sh"}, path.Base(s)) {
+		return true
+	}
+	if slices.Contains([]string{"bash", "sh"}, path.Base(path.Ext(s))) {
+		return true
+	}
+	return false
+}
+
+func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) error {
+	prog, err := syntax.NewParser().Parse(reader, name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	interp.OpenHandler(VirtualOpenHandler(vs.Workspace))(r)
-	interp.ReadDirHandler2(VirtualReadDirHandler2(vs.Workspace))(r)
-	interp.StatHandler(VirtualStatHandler(vs.Workspace))(r)
-
-	//
-	var env = vs.System.Env()
-	if len(env) > 0 {
-		interp.Env(expand.ListEnviron(env...))(r)
-	}
-
-	dir, err := vs.System.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	if err := interp.Dir(dir)(r); err != nil {
-		return nil, err
-	}
-	interp.StdIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)(r)
-
-	// exec handlers
-	wrap := func(next interp.ExecHandlerFunc) interp.ExecHandlerFunc {
-		return func(ctx context.Context, args []string) error {
-			if vs.ExecHandler != nil {
-				done, err := vs.ExecHandler(ctx, args)
-				if done {
-					return nil
-				}
-				if err != nil {
-					return err
-				}
-			}
-			return next(ctx, args)
-		}
-	}
-	var middlewares = []func(interp.ExecHandlerFunc) interp.ExecHandlerFunc{
-		// custom handler
-		wrap,
-		// default bash handler
-		VirtualExecHandler(vs),
-	}
-	if err := interp.ExecHandlers(middlewares...)(r); err != nil {
-		return nil, err
-	}
-	return r, nil
+	r.Reset()
+	return r.Run(ctx, prog)
 }

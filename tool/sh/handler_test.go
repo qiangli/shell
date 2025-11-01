@@ -1,6 +1,7 @@
 package sh
 
 import (
+	"context"
 	"os"
 	"testing"
 )
@@ -20,11 +21,12 @@ func TestNewLocalSystem(t *testing.T) {
 		{"@ anonymous agent"},
 	}
 
-	ls := NewLocalSystem("../", ioe)
-	ls.ExecHandler = NewDummyExecHandler(ioe)
+	vs := NewLocalSystem("../", ioe)
+	vs.ExecHandler = NewDummyExecHandler(vs)
 
+	ctx := context.TODO()
 	for _, tc := range tests {
-		err := ls.Run(tc.script)
+		err := vs.RunScript(ctx, tc.script)
 		if err != nil {
 			t.FailNow()
 		}

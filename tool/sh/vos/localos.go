@@ -39,9 +39,9 @@ func (s *LocalSystem) Command(name string, arg ...string) *exec.Cmd {
 
 func (s *LocalSystem) validatePath(path string) (string, error) {
 	path = filepath.Clean(path)
-	if !strings.HasPrefix(path, s.root) {
-		return "", fmt.Errorf("invalid local fs path: %s", path)
-	}
+	// if !strings.HasPrefix(path, s.root) {
+	// 	return "", fmt.Errorf("invalid local fs path: %s", path)
+	// }
 	rel := strings.TrimPrefix(path, s.root)
 	abs, err := filepath.Abs(filepath.Join(s.root, rel))
 	if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -12,13 +13,12 @@ import (
 )
 
 func main() {
-	var scriptptr = flag.String("c", "", "script to be executed")
 	var rootptr = flag.String("root", "", "Specify the root directory")
 	flag.Parse()
 
-	var script = *scriptptr
-	var root = *rootptr
+	args := flag.Args()
 
+	var root = *rootptr
 	if root == "" {
 		root, _ = os.Getwd()
 	}
@@ -29,12 +29,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	ls := vos.NewLocalSystem(root)
-	ls.Exitf = func(code int) {
+	los := vos.NewLocalSystem(root)
+	los.Exitf = func(code int) {
 		fmt.Printf("exit %v\n", code)
 		os.Exit(code)
 	}
+
+	lfs := vfs.NewLocalFS(root)
 	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	vs := sh.NewVirtualSystem(ls, vfs.NewLocalFS(root), ioe)
-	sh.Gosh(vs, script)
+	vs := sh.NewVirtualSystem(los, lfs, ioe)
+	vs.ExecHandler = sh.NewDummyExecHandler(vs)
+
+	if err := sh.Gosh(context.Background(), vs, args); err != nil {
+		os.Exit(1)
+	}
 }

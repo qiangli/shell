@@ -3,26 +3,24 @@ package sh
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
-	"io"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"golang.org/x/term"
 
 	"mvdan.cc/sh/v3/interp"
-	"mvdan.cc/sh/v3/syntax"
 )
 
 // Gosh executes a script provided in the argument.
 // If no arguments are provided, it will execute in interactive mode
 // if standard input supports it.
 // This function manages errors and exits appropriately.
-func Gosh(vs *VirtualSystem, script string) {
-	// err := runAll(vs, script)
-	err := vs.Run(script)
+func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
+	script, args := parseFlags(args)
+	err := runAll(ctx, vs, script, args)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
 		vs.System.Exit(int(es))
@@ -31,59 +29,50 @@ func Gosh(vs *VirtualSystem, script string) {
 		fmt.Fprintln(vs.IOE.Stderr, err)
 		vs.System.Exit(1)
 	}
+	return err
 }
 
-func runAll(vs *VirtualSystem, script string) error {
-	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-
-	r, err := NewRunner(vs, interp.Interactive(true))
-	if err != nil {
-		return err
-	}
+func runAll(parent context.Context, vs *VirtualSystem, script string, args []string) error {
+	ctx, _ := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
+	// r, err := vs.NewRunner(interp.Interactive(true))
+	// if err != nil {
+	// 	return err
+	// }
 
 	if script != "" {
-		return run(ctx, r, strings.NewReader(script), "")
+		return vs.RunScript(ctx, script)
+	}
+
+	if len(args) > 0 {
+		for _, path := range args {
+			if err := vs.RunPath(ctx, path); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	if file, ok := vs.IOE.Stdin.(*os.File); ok {
 		if term.IsTerminal(int(file.Fd())) {
-			return runInteractive(vs, ctx, r)
+			return vs.Interactive(ctx)
 		}
 	}
-	return run(ctx, r, vs.IOE.Stdin, "")
+
+	// piped
+	return vs.RunStdin(ctx)
 }
 
-func run(ctx context.Context, r *interp.Runner, reader io.Reader, name string) error {
-	prog, err := syntax.NewParser().Parse(reader, name)
+// Return root, script, non flag args
+func parseFlags(args []string) (string, []string) {
+	fs := flag.NewFlagSet("goshFlags", flag.ContinueOnError)
+	var scriptptr = fs.String("c", "", "script to be executed")
+	// var rootptr = fs.String("root", "", "Specify the root directory")
+
+	err := fs.Parse(args)
 	if err != nil {
-		return err
+		fmt.Println("Error parsing flags:", err)
+		return "", args
 	}
-	r.Reset()
-	return r.Run(ctx, prog)
-}
 
-func runInteractive(vs *VirtualSystem, ctx context.Context, r *interp.Runner) error {
-	parser := syntax.NewParser()
-
-	fmt.Fprintf(vs.IOE.Stdout, "$ ")
-	err := parser.Interactive(vs.IOE.Stdin, func(stmts []*syntax.Stmt) bool {
-		if parser.Incomplete() {
-			fmt.Fprintf(vs.IOE.Stdout, "> ")
-			return true
-		}
-		// run
-		for _, stmt := range stmts {
-			err := r.Run(ctx, stmt)
-			if err != nil {
-				fmt.Fprintf(vs.IOE.Stderr, "error: %s\n", err.Error())
-			}
-			if r.Exited() {
-				vs.System.Exit(0)
-				return true
-			}
-		}
-		fmt.Fprintf(vs.IOE.Stdout, "$ ")
-		return true
-	})
-	return err
+	return *scriptptr, fs.Args()
 }

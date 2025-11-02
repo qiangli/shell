@@ -22,9 +22,11 @@ import (
 )
 
 func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
+	var keeps = []string{"PATH", "PWD", "HOME", "USER", "SHELL"}
+	ClearAllEnv(keeps)
 	return func(ctx context.Context, args []string) (bool, error) {
 		fmt.Fprintf(vs.IOE.Stderr, "args: %+v\n", args)
-		if args[0] == "ai" || strings.HasPrefix(args[0], "@") {
+		if args[0] == "ai" || strings.HasPrefix(args[0], "@") || strings.HasPrefix(args[0], "/") {
 			fmt.Fprintf(vs.IOE.Stdout, "ai args: %+v\n", args)
 			return true, nil
 		}

@@ -2,11 +2,15 @@ package sh
 
 import (
 	"context"
+	_ "embed"
 	"os"
 	"testing"
 )
 
-func TestNewLocalSystem(t *testing.T) {
+//go:embed testdata/test.sh
+var test_sh string
+
+func TestRunScript(t *testing.T) {
 	ioe := &IOE{
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
@@ -19,14 +23,39 @@ func TestNewLocalSystem(t *testing.T) {
 		{"ai --models hello"},
 		{"@agent --max-history 0 hello"},
 		{"@ anonymous agent"},
+		{test_sh},
 	}
 
-	vs := NewLocalSystem("../", ioe)
+	vs := NewLocalSystem("./", ioe)
 	vs.ExecHandler = NewDummyExecHandler(vs)
 
 	ctx := context.TODO()
 	for _, tc := range tests {
 		err := vs.RunScript(ctx, tc.script)
+		if err != nil {
+			t.FailNow()
+		}
+	}
+}
+
+func TestRunPath(t *testing.T) {
+	ioe := &IOE{
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+	tests := []struct {
+		script string
+	}{
+		{"testdata/test.sh"},
+	}
+
+	vs := NewLocalSystem("./", ioe)
+	vs.ExecHandler = NewDummyExecHandler(vs)
+
+	ctx := context.TODO()
+	for _, tc := range tests {
+		err := vs.RunPath(ctx, tc.script)
 		if err != nil {
 			t.FailNow()
 		}

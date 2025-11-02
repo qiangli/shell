@@ -34,10 +34,6 @@ func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
 
 func runAll(parent context.Context, vs *VirtualSystem, script string, args []string) error {
 	ctx, _ := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
-	// r, err := vs.NewRunner(interp.Interactive(true))
-	// if err != nil {
-	// 	return err
-	// }
 
 	if script != "" {
 		return vs.RunScript(ctx, script)
@@ -62,11 +58,10 @@ func runAll(parent context.Context, vs *VirtualSystem, script string, args []str
 	return vs.RunStdin(ctx)
 }
 
-// Return root, script, non flag args
+// Return script, non flag args
 func parseFlags(args []string) (string, []string) {
 	fs := flag.NewFlagSet("goshFlags", flag.ContinueOnError)
 	var scriptptr = fs.String("c", "", "script to be executed")
-	// var rootptr = fs.String("root", "", "Specify the root directory")
 
 	err := fs.Parse(args)
 	if err != nil {

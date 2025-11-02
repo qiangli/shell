@@ -103,9 +103,6 @@ func (s *LocalFS) Locator(path string) (string, error) {
 
 func (s *LocalFS) validatePath(path string) (string, error) {
 	path = filepath.Clean(path)
-	// if !strings.HasPrefix(path, s.root) {
-	// 	return "", fmt.Errorf("invalid local fs path: %s", path)
-	// }
 	rel := strings.TrimPrefix(path, s.root)
 	abs, err := filepath.Abs(filepath.Join(s.root, rel))
 	if err != nil {

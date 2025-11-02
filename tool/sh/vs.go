@@ -137,9 +137,6 @@ func (vs *VirtualSystem) NewRunner(opts ...interp.RunnerOption) (*interp.Runner,
 			if vs.ExecHandler != nil {
 				done, err := vs.ExecHandler(ctx, args)
 				if done {
-					return nil
-				}
-				if err != nil {
 					return err
 				}
 			}

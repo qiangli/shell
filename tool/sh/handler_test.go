@@ -53,6 +53,8 @@ func TestRunPath(t *testing.T) {
 	vs := NewLocalSystem("./", ioe)
 	vs.ExecHandler = NewDummyExecHandler(vs)
 
+	vs.System.Setenv("city", "New York")
+
 	ctx := context.TODO()
 	for _, tc := range tests {
 		err := vs.RunPath(ctx, tc.script)

@@ -35,7 +35,13 @@ func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 		if interp.IsBuiltin(args[0]) {
 			return false, nil
 		}
-		// bash
+
+		// coreutils
+		if did, err := RunCoreUtils(ctx, vs.IOE, args); did {
+			return did, err
+		}
+
+		// bash subshell
 		if IsShell(args[0]) {
 			err := Gosh(ctx, vs, args)
 			return true, err
@@ -191,6 +197,7 @@ func VirtualExecHandler(vs *VirtualSystem) func(next interp.ExecHandlerFunc) int
 	}
 }
 
+// return true if the last elemment is or ends in sh/bash
 func IsShell(s string) bool {
 	if slices.Contains([]string{"bash", "sh"}, path.Base(s)) {
 		return true

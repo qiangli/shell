@@ -2,7 +2,9 @@
 
 set -x
 
-/agent:search --message "weather in sfo"
+echo "city $city"
+
+/agent:search --message "weather in ${city} city"
 
 @agent "tell me a joke"
 

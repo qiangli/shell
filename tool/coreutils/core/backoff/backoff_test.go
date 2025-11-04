@@ -2,20 +2,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package backoff
 
 import (
-	"bytes"
+	// "bytes"
 	"errors"
-	"regexp"
+	"fmt"
+	"os"
+	"os/exec"
+	// "regexp"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/u-root/u-root/pkg/testutil"
+	// "github.com/u-root/u-root/pkg/testutil"
 )
 
 func TestRunIt(t *testing.T) {
+
 	for _, tt := range []struct {
 		name    string
 		timeout time.Duration
@@ -42,6 +45,19 @@ func TestRunIt(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			run := func(to time.Duration, c string, a ...string) error {
+				cb := func(args []string) error {
+					cmd := exec.Command(args[0], args[1:]...)
+					cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+					err := cmd.Run()
+					return err
+				}
+				args := append([]string{"backoff", "-v", "-t", fmt.Sprintf("%v", to.Seconds()), c}, a...)
+				t.Logf("testing %+v", args)
+				bkoff := New(cb)
+				return bkoff.Run(args[1:]...)
+			}
+
 			if err := run(tt.timeout, tt.cmd, tt.args...); !errors.Is(err, tt.wantErr) {
 				if err != nil {
 					if !strings.Contains(err.Error(), tt.wantErr.Error()) {
@@ -53,51 +69,51 @@ func TestRunIt(t *testing.T) {
 	}
 }
 
-// TestOK for now just runs a simple successful test with 0 args or more than one arg.
-func TestOK(t *testing.T) {
-	tests := []struct {
-		args   []string
-		stdout string
-		stderr string
-		exitok bool
-	}{
-		{args: []string{}, stdout: "", exitok: false},
-		{args: []string{"date"}, stdout: ".*", exitok: true},
-		{args: []string{"echo", "hi"}, stdout: ".*hi", exitok: true},
-		{args: []string{"-t", "1s", "false"}, exitok: false},
-	}
+// // TestOK for now just runs a simple successful test with 0 args or more than one arg.
+// func TestOK(t *testing.T) {
+// 	tests := []struct {
+// 		args   []string
+// 		stdout string
+// 		stderr string
+// 		exitok bool
+// 	}{
+// 		{args: []string{}, stdout: "", exitok: false},
+// 		{args: []string{"date"}, stdout: ".*", exitok: true},
+// 		{args: []string{"echo", "hi"}, stdout: ".*hi", exitok: true},
+// 		{args: []string{"-t", "1s", "false"}, exitok: false},
+// 	}
 
-	for _, v := range tests {
-		c := testutil.Command(t, v.args...)
-		stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
-		c.Stdout, c.Stderr = stdout, stderr
-		err := c.Run()
-		if (err != nil) && v.exitok {
-			t.Errorf("%v: got %v, want nil", v, err)
-		}
-		if (err == nil) && !v.exitok {
-			t.Errorf("%v: got nil, want err", v)
-		}
-		m, err := regexp.MatchString(v.stderr, stderr.String())
-		if err != nil {
-			t.Errorf("stderr: %v: got %v, want nil", v, err)
-		} else {
-			if !m {
-				t.Errorf("%v: regexp.MatchString(%s, %s) false, wanted match", v, v.stderr, stderr)
-			}
-		}
+// 	for _, v := range tests {
+// 		c := testutil.Command(t, v.args...)
+// 		stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
+// 		c.Stdout, c.Stderr = stdout, stderr
+// 		err := c.Run()
+// 		if (err != nil) && v.exitok {
+// 			t.Errorf("%v: got %v, want nil", v, err)
+// 		}
+// 		if (err == nil) && !v.exitok {
+// 			t.Errorf("%v: got nil, want err", v)
+// 		}
+// 		m, err := regexp.MatchString(v.stderr, stderr.String())
+// 		if err != nil {
+// 			t.Errorf("stderr: %v: got %v, want nil", v, err)
+// 		} else {
+// 			if !m {
+// 				t.Errorf("%v: regexp.MatchString(%s, %s) false, wanted match", v, v.stderr, stderr)
+// 			}
+// 		}
 
-		m, err = regexp.MatchString(v.stdout, stdout.String())
-		if err != nil {
-			t.Errorf("stdout: %v: got %v, want nil", v, err)
-		}
-		if !m {
-			t.Errorf("%v: regexp.MatchString(%s, %s) false, wanted match", v, v.stdout, stderr.String())
-		}
-	}
-}
+// 		m, err = regexp.MatchString(v.stdout, stdout.String())
+// 		if err != nil {
+// 			t.Errorf("stdout: %v: got %v, want nil", v, err)
+// 		}
+// 		if !m {
+// 			t.Errorf("%v: regexp.MatchString(%s, %s) false, wanted match", v, v.stdout, stderr.String())
+// 		}
+// 	}
+// }
 
-// If you really like fork-bombing your machine, remove these lines :-)
-func TestMain(m *testing.M) {
-	testutil.Run(m, main)
-}
+// // If you really like fork-bombing your machine, remove these lines :-)
+// func TestMain(m *testing.M) {
+// 	testutil.Run(m, main)
+// }

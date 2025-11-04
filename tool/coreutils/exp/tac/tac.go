@@ -12,16 +12,35 @@
 // Description:
 //
 // Options:
-package main
+package tac
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/u-root/u-root/pkg/core"
+	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
+
+// command implements the cat core utility.
+type command struct {
+	core.Base
+}
+
+// New creates a new cat command.
+func New() core.Command {
+	c := &command{}
+	c.Init()
+	return c
+}
+
+type flags struct {
+}
 
 const ReadSize int64 = 4096
 
@@ -32,7 +51,7 @@ type ReadAtSeeker interface {
 	io.Seeker
 }
 
-func tacOne(w io.Writer, r ReadAtSeeker) error {
+func (z *command) tacOne(w io.Writer, r ReadAtSeeker) error {
 	var b [ReadSize]byte
 	// Get current EOF. While the file may be growing, there's
 	// only so much we can do.
@@ -78,7 +97,7 @@ func tacOne(w io.Writer, r ReadAtSeeker) error {
 	return nil
 }
 
-func tac(w io.Writer, files []string) error {
+func (z *command) tac(w io.Writer, files []string) error {
 	if len(files) == 0 {
 		return errStdin
 	}
@@ -87,7 +106,7 @@ func tac(w io.Writer, files []string) error {
 		if err != nil {
 			return err
 		}
-		err = tacOne(w, f)
+		err = z.tacOne(w, f)
 		f.Close() // Don't defer, you might get EMFILE for no good reason.
 		if err != nil {
 			return err
@@ -97,9 +116,38 @@ func tac(w io.Writer, files []string) error {
 	return nil
 }
 
-func main() {
-	flag.Parse()
-	if err := tac(os.Stdout, flag.Args()); err != nil {
-		log.Fatalf("tac: %v", err)
+// func main() {
+// 	flag.Parse()
+// 	if err := tac(os.Stdout, flag.Args()); err != nil {
+// 		log.Fatalf("tac: %v", err)
+// 	}
+// }
+
+// Run executes the command with a `context.Background()`.
+func (z *command) Run(args ...string) error {
+	return z.RunContext(context.Background(), args...)
+}
+
+// RunContext executes the command.
+func (z *command) RunContext(ctx context.Context, args ...string) error {
+	fs := flag.NewFlagSet("tac", flag.ContinueOnError)
+	fs.SetOutput(z.Stderr)
+
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: tac <file...>\n\n")
+		fmt.Fprintf(fs.Output(), "tac concatenates files and prints to stdout in reverse order\n")
+		fmt.Fprintf(fs.Output(), "file by file.\n\n")
+		fmt.Fprintf(fs.Output(), "Options:\n")
+		fs.PrintDefaults()
 	}
+
+	if err := fs.Parse(unixflag.ArgsToGoArgs(args)); err != nil {
+		return err
+	}
+
+	if err := z.tac(z.Stdout, fs.Args()); err != nil {
+		return err
+	}
+
+	return nil
 }

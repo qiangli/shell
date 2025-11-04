@@ -1,3 +1,0 @@
-Key expires 29.02.2024
-UID: uroot@uroot.org
-No passphrase just a test key.

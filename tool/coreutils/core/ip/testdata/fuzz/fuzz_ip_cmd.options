@@ -1,3 +1,0 @@
-[libfuzzer]
-dict = ip.dict
-max_len = 32

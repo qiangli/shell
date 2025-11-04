@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package basename
 
 import (
 	"bytes"
@@ -50,7 +50,10 @@ func TestRun(t *testing.T) {
 		t.Run(fmt.Sprintf("Using flags %s", tt.flags), func(t *testing.T) {
 			var out bytes.Buffer
 
-			err := run(&out, tt.flags)
+			cmd := New()
+			cmd.SetIO(nil, &out, &out)
+			err := cmd.Run(tt.flags...)
+			// err := run(&out, tt.flags)
 			if !errors.Is(err, tt.err) {
 				t.Fatalf("got %v want %v", err, tt.err)
 			}

@@ -20,7 +20,8 @@ import (
 // This function manages errors and exits appropriately.
 func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
 	script, args := parseFlags(args)
-	err := runAll(ctx, vs, script, args)
+
+	err := Run(ctx, vs, script, args)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
 		vs.System.Exit(int(es))
@@ -32,8 +33,9 @@ func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
 	return err
 }
 
-func runAll(parent context.Context, vs *VirtualSystem, script string, args []string) error {
-	ctx, _ := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
+func Run(parent context.Context, vs *VirtualSystem, script string, args []string) error {
+	ctx, cancel := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	if script != "" {
 		return vs.RunScript(ctx, script)
@@ -48,20 +50,18 @@ func runAll(parent context.Context, vs *VirtualSystem, script string, args []str
 		return nil
 	}
 
-	if file, ok := vs.IOE.Stdin.(*os.File); ok {
-		if term.IsTerminal(int(file.Fd())) {
-			return vs.Interactive(ctx)
-		}
+	if v, ok := vs.IOE.Stdin.(*os.File); ok && term.IsTerminal(int(v.Fd())) {
+		return vs.RunInteractive(ctx)
 	}
 
 	// piped
-	return vs.RunStdin(ctx)
+	return vs.RunReader(ctx)
 }
 
 // Return script, non flag args
 func parseFlags(args []string) (string, []string) {
-	fs := flag.NewFlagSet("goshFlags", flag.ContinueOnError)
-	var scriptptr = fs.String("c", "", "script to be executed")
+	fs := flag.NewFlagSet("gosh", flag.ContinueOnError)
+	var command = fs.String("c", "", "script to run")
 
 	err := fs.Parse(args)
 	if err != nil {
@@ -69,5 +69,5 @@ func parseFlags(args []string) (string, []string) {
 		return "", args
 	}
 
-	return *scriptptr, fs.Args()
+	return *command, fs.Args()
 }

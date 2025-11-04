@@ -7,21 +7,24 @@
 // Synopsis:
 //
 //	basename NAME [SUFFIX]
-package main
+package basename
 
 import (
+	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/u-root/u-root/pkg/core"
+	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
 
 var errUsage = errors.New("usage: basename NAME [SUFFIX]")
 
-func run(w io.Writer, args []string) error {
+func (c *command) run(w io.Writer, args []string) error {
 	switch len(args) {
 	case 2:
 		fileName := filepath.Base(args[0])
@@ -39,8 +42,55 @@ func run(w io.Writer, args []string) error {
 	}
 }
 
-func main() {
-	if err := run(os.Stdout, os.Args[1:]); err != nil {
-		log.Fatal(err)
+// func main() {
+// 	if err := run(os.Stdout, os.Args[1:]); err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+
+// command implements the cat core utility.
+type command struct {
+	core.Base
+}
+
+// New creates a new cat command.
+func New() core.Command {
+	c := &command{}
+	c.Init()
+	return c
+}
+
+type flags struct {
+}
+
+// Run executes the command with a `context.Background()`.
+func (c *command) Run(args ...string) error {
+	return c.RunContext(context.Background(), args...)
+}
+
+// RunContext executes the command.
+func (c *command) RunContext(ctx context.Context, args ...string) error {
+	// var f flags
+
+	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+
+	// fs.BoolVar(&f.u, "u", false, "ignored")
+
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "basename NAME [SUFFIX]\n\n")
+		fmt.Fprintf(fs.Output(), "Basename return name with leading path information removed.\n")
+		fmt.Fprintf(fs.Output(), "Options:\n")
+		fs.PrintDefaults()
 	}
+
+	if err := fs.Parse(unixflag.ArgsToGoArgs(args)); err != nil {
+		return err
+	}
+
+	if err := c.run(c.Stdout, fs.Args()); err != nil {
+		return err
+	}
+
+	return nil
 }

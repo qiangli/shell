@@ -43,7 +43,7 @@ func (vs *VirtualSystem) RunScript(ctx context.Context, script string) error {
 	return run(ctx, r, strings.NewReader(script), "")
 }
 
-func (vs *VirtualSystem) RunStdin(ctx context.Context) error {
+func (vs *VirtualSystem) RunReader(ctx context.Context) error {
 	r, err := vs.NewRunner(interp.Interactive(true))
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func (vs *VirtualSystem) RunPath(ctx context.Context, path string) error {
 	return run(ctx, r, f, path)
 }
 
-func (vs *VirtualSystem) Interactive(ctx context.Context) error {
+func (vs *VirtualSystem) RunInteractive(ctx context.Context) error {
 	r, err := vs.NewRunner(interp.Interactive(true))
 	if err != nil {
 		return err

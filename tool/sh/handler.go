@@ -24,6 +24,8 @@ import (
 func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 	var keeps = []string{"PATH", "PWD", "HOME", "USER", "SHELL"}
 	ClearAllEnv(keeps)
+
+	// return true if handled; otherwise false to leave it to the subsequent handlers
 	return func(ctx context.Context, args []string) (bool, error) {
 		fmt.Fprintf(vs.IOE.Stderr, "args: %+v\n", args)
 		if args[0] == "ai" || strings.HasPrefix(args[0], "@") || strings.HasPrefix(args[0], "/") {
@@ -31,13 +33,18 @@ func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 			return true, nil
 		}
 
-		// allow bash built in
-		if interp.IsBuiltin(args[0]) {
-			return false, nil
-		}
+		// // exec
+		// if args[0] == "exec" {
+		// 	fmt.Fprintf(vs.IOE.Stderr, "exec command not supported: %v\n", args)
+		// }
+
+		// // allow bash builtin
+		// if interp.IsBuiltin(args[0]) {
+		// 	return false, nil
+		// }
 
 		// coreutils
-		if did, err := RunCoreUtils(ctx, vs.IOE, args); did {
+		if did, err := RunCoreUtils(ctx, vs, args); did {
 			return did, err
 		}
 
@@ -48,6 +55,7 @@ func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 		}
 
 		// block other commands
+		fmt.Fprintf(vs.IOE.Stderr, "command not supported: %s %+v\n", args[0], args[1:])
 		return true, nil
 	}
 }

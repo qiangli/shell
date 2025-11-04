@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package tac
 
 import (
 	"bytes"
@@ -20,7 +20,12 @@ func TestTac(t *testing.T) {
 	}
 
 	stdout := &bytes.Buffer{}
-	err = tac(stdout, []string{path})
+
+	cmd := New()
+	cmd.SetIO(nil, stdout, nil)
+
+	// err = tac(stdout, []string{path})
+	err = cmd.Run([]string{path}...)
 	if err != nil {
 		t.Fatalf(`tac(stdout, []string{f.Name(), f.Name()}) = %v, want nil`, err)
 	}
@@ -32,7 +37,11 @@ func TestTac(t *testing.T) {
 }
 
 func TestTacStdin(t *testing.T) {
-	err := tac(nil, nil)
+	cmd := New()
+	cmd.SetIO(os.Stdin, os.Stdout, os.Stderr)
+
+	// err := tac(nil, nil)
+	err := cmd.Run()
 	if !errors.Is(err, errStdin) {
 		t.Errorf("expected %v, got %v", errStdin, err)
 	}

@@ -28,6 +28,7 @@ type ExecHandler func(context.Context, []string) (bool, error)
 type VirtualSystem struct {
 	IOE *IOE
 
+	Root      string
 	Workspace vfs.Workspace
 	System    vos.System
 
@@ -95,8 +96,9 @@ func (vs *VirtualSystem) RunInteractive(ctx context.Context) error {
 	return err
 }
 
-func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
+func NewVirtualSystem(root string, s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 	return &VirtualSystem{
+		Root:      root,
 		System:    s,
 		Workspace: ws,
 		IOE:       ioe,
@@ -105,7 +107,7 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 
 func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
 	root, _ = filepath.Abs(root)
-	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
+	return NewVirtualSystem(root, vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
 }
 
 func (vs *VirtualSystem) NewRunner(opts ...interp.RunnerOption) (*interp.Runner, error) {

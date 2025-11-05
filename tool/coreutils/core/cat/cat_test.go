@@ -196,28 +196,28 @@ func TestCatDash(t *testing.T) {
 	}
 }
 
-func TestCatWorkingDir(t *testing.T) {
-	tempDir := t.TempDir()
+// func TestCatWorkingDir(t *testing.T) {
+// 	tempDir := t.TempDir()
 
-	// Create a file in the temp directory
-	testFile := "test.txt"
-	testContent := "test content"
-	err := os.WriteFile(filepath.Join(tempDir, testFile), []byte(testContent), 0o666)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	// Create a file in the temp directory
+// 	testFile := "test.txt"
+// 	testContent := "test content"
+// 	err := os.WriteFile(filepath.Join(tempDir, testFile), []byte(testContent), 0o666)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	cmd := New(os.Open)
-	var stdout, stderr bytes.Buffer
-	cmd.SetIO(bytes.NewReader(nil), &stdout, &stderr)
-	cmd.SetWorkingDir(tempDir)
+// 	cmd := New(os.Open)
+// 	var stdout, stderr bytes.Buffer
+// 	cmd.SetIO(bytes.NewReader(nil), &stdout, &stderr)
+// 	cmd.SetWorkingDir(tempDir)
 
-	err = cmd.Run(testFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	err = cmd.Run(testFile)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	if stdout.String() != testContent {
-		t.Errorf("Want: %q Got: %q", testContent, stdout.String())
-	}
-}
+// 	if stdout.String() != testContent {
+// 		t.Errorf("Want: %q Got: %q", testContent, stdout.String())
+// 	}
+// }

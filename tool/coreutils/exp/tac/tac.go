@@ -36,7 +36,7 @@ type ReadAtSeeker interface {
 	io.Seeker
 }
 
-func tacOne(w io.Writer, r ReadAtSeeker) error {
+func (c *command) tacOne(w io.Writer, r ReadAtSeeker) error {
 	var b [ReadSize]byte
 	// Get current EOF. While the file may be growing, there's
 	// only so much we can do.
@@ -46,7 +46,7 @@ func tacOne(w io.Writer, r ReadAtSeeker) error {
 	}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	c := make(chan byte)
+	cb := make(chan byte)
 	go func(r <-chan byte, w io.Writer) {
 		defer wg.Done()
 		line := string(<-r)
@@ -62,7 +62,7 @@ func tacOne(w io.Writer, r ReadAtSeeker) error {
 		if _, err := w.Write([]byte(line)); err != nil {
 			log.Fatal(err)
 		}
-	}(c, w)
+	}(cb, w)
 
 	for loc > 0 {
 		n := min(loc, ReadSize)
@@ -74,24 +74,24 @@ func tacOne(w io.Writer, r ReadAtSeeker) error {
 		loc -= int64(amt)
 		for i := range b[:amt] {
 			o := amt - i - 1
-			c <- b[o]
+			cb <- b[o]
 		}
 	}
-	close(c)
+	close(cb)
 	wg.Wait()
 	return nil
 }
 
-func tac(w io.Writer, files []string) error {
+func (c *command) tac(w io.Writer, files []string) error {
 	if len(files) == 0 {
 		return errStdin
 	}
 	for _, name := range files {
-		f, err := os.Open(name)
+		f, err := c.Open(name)
 		if err != nil {
 			return err
 		}
-		err = tacOne(w, f)
+		err = c.tacOne(w, f)
 		f.Close() // Don't defer, you might get EMFILE for no good reason.
 		if err != nil {
 			return err
@@ -108,14 +108,20 @@ func tac(w io.Writer, files []string) error {
 // 	}
 // }
 
-// command implements the cat core utility.
+// command implements the tac utility.
+type FileOpen func(string) (*os.File, error)
+
 type command struct {
 	core.Base
+
+	Open FileOpen
 }
 
 // New creates a new tac command.
-func New() core.Command {
-	c := &command{}
+func New(fo FileOpen) core.Command {
+	c := &command{
+		Open: fo,
+	}
 	c.Init()
 	return c
 }
@@ -145,7 +151,7 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	if err := tac(c.Stdout, fs.Args()); err != nil {
+	if err := c.tac(c.Stdout, fs.Args()); err != nil {
 		return err
 	}
 

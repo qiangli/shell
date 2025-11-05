@@ -37,7 +37,7 @@ func main() {
 
 	lfs := vfs.NewLocalFS(root)
 	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	vs := sh.NewVirtualSystem(los, lfs, ioe)
+	vs := sh.NewVirtualSystem(root, los, lfs, ioe)
 	vs.ExecHandler = sh.NewDummyExecHandler(vs)
 
 	if err := sh.Gosh(context.Background(), vs, args); err != nil {

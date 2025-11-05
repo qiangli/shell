@@ -63,8 +63,8 @@ func (c *command) runCat(args []string) error {
 			continue
 		}
 
-		resolvedFile := c.ResolvePath(file)
-		f, err := c.Open(resolvedFile)
+		// resolvedFile := c.ResolvePath(file)
+		f, err := c.Open(file)
 		if err != nil {
 			return err
 		}

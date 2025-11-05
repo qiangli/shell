@@ -92,6 +92,7 @@ func RunBackoff(ctx context.Context, vs *VirtualSystem, args []string) (bool, er
 func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, error) {
 	runCmd := func(cmd core.Command) (bool, error) {
 		cmd.SetIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)
+		cmd.SetWorkingDir(vs.Root)
 		err := cmd.RunContext(ctx, args[1:]...)
 		return true, err
 	}
@@ -134,7 +135,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "shasum":
 		return runCmd(shasum.New())
 	case "tac":
-		return runCmd(tac.New())
+		return runCmd(tac.New(open))
 	case "tail":
 		return runCmd(tail.New(open))
 	case "tar":

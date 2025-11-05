@@ -21,7 +21,7 @@ func TestTac(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 
-	cmd := New()
+	cmd := New(os.Open)
 	cmd.SetIO(nil, stdout, nil)
 
 	// err = tac(stdout, []string{path})
@@ -37,7 +37,7 @@ func TestTac(t *testing.T) {
 }
 
 func TestTacStdin(t *testing.T) {
-	cmd := New()
+	cmd := New(os.Open)
 	cmd.SetIO(os.Stdin, os.Stdout, os.Stderr)
 
 	// err := tac(nil, nil)

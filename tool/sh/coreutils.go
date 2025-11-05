@@ -6,6 +6,7 @@ import (
 
 	"github.com/qiangli/shell/tool/coreutils/core/backoff"
 	"github.com/qiangli/shell/tool/coreutils/core/basename"
+	"github.com/qiangli/shell/tool/coreutils/core/date"
 	"github.com/qiangli/shell/tool/coreutils/core/dirname"
 	"github.com/qiangli/shell/tool/coreutils/core/head"
 	"github.com/qiangli/shell/tool/coreutils/core/tail"
@@ -32,7 +33,7 @@ import (
 )
 
 // tool/coreutils/core/cmp/
-// tool/coreutils/core/date/
+//
 // tool/coreutils/core/grep/
 // tool/coreutils/core/md5sum/
 // tool/coreutils/core/seq/
@@ -48,7 +49,7 @@ import (
 
 // internal commands
 var CoreUtilsCommands = []string{
-	"base64", "basename", "cat", "chmod", "cp", "dirname", "find", "gzip", "head", "ls", "mkdir",
+	"base64", "basename", "cat", "chmod", "cp", "date", "dirname", "find", "gzip", "head", "ls", "mkdir",
 	"mktemp", "mv", "rm", "shasum", "tac", "tail", "tar", "touch", "wget", "xargs",
 }
 
@@ -106,6 +107,8 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(chmod.New())
 	case "cp":
 		return runCmd(cp.New())
+	case "date":
+		return runCmd(date.New())
 	case "dirname":
 		return runCmd(dirname.New())
 	case "find":

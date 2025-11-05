@@ -4,7 +4,7 @@
 
 //go:build !plan9 && !windows
 
-package main
+package date
 
 import (
 	"syscall"

@@ -7,9 +7,10 @@
 // Synopsis:
 //
 //	date [-u] [+format] | date [-u] [MMDDhhmm[CC]YY[.ss]]
-package main
+package date
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -19,6 +20,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/u-root/u-root/pkg/core"
+	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
 
 type Clock interface {
@@ -54,23 +58,23 @@ var (
 		"%z": "-0700",
 		"%Z": "MST",
 	}
-	flags struct {
-		universal bool
-		reference string
-	}
+	// flags struct {
+	// 	universal bool
+	// 	reference string
+	// }
 )
 
-const cmd = "date [-u] [-d FILE] [+format] | date [-u] [-d FILE] [MMDDhhmm[CC]YY[.ss]]"
+// const cmd = "date [-u] [-d FILE] [+format] | date [-u] [-d FILE] [MMDDhhmm[CC]YY[.ss]]"
 
-func init() {
-	defUsage := flag.Usage
-	flag.Usage = func() {
-		os.Args[0] = cmd
-		defUsage()
-	}
-	flag.BoolVar(&flags.universal, "u", false, "Coordinated Universal Time (UTC)")
-	flag.StringVar(&flags.reference, "r", "", "Display the last modification time of FILE")
-}
+// func init() {
+// 	defUsage := flag.Usage
+// 	flag.Usage = func() {
+// 		os.Args[0] = cmd
+// 		defUsage()
+// 	}
+// 	flag.BoolVar(&flags.universal, "u", false, "Coordinated Universal Time (UTC)")
+// 	flag.StringVar(&flags.reference, "r", "", "Display the last modification time of FILE")
+// }
 
 // regex search for +format POSIX patterns
 func formatParser(args string) []string {
@@ -250,10 +254,61 @@ func run(args []string, univ bool, ref string, clocksource Clock, w io.Writer) e
 	return nil
 }
 
-func main() {
-	flag.Parse()
+// func main() {
+// 	flag.Parse()
+// 	rc := RealClock{}
+// 	if err := run(flag.Args(), flags.universal, flags.reference, rc, os.Stdout); err != nil {
+// 		log.Fatalf("date: %v", err)
+// 	}
+// }
+
+// command implements the date core utility.
+type command struct {
+	core.Base
+}
+
+// New creates a new cat command.
+func New() core.Command {
+	c := &command{}
+	c.Init()
+	return c
+}
+
+type flags struct {
+	universal bool
+	reference string
+}
+
+// Run executes the command with a `context.Background()`.
+func (c *command) Run(args ...string) error {
+	return c.RunContext(context.Background(), args...)
+}
+
+// RunContext executes the command.
+func (c *command) RunContext(ctx context.Context, args ...string) error {
+	var f flags
+
+	fs := flag.NewFlagSet("date", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+
+	fs.BoolVar(&f.universal, "u", false, "Coordinated Universal Time (UTC)")
+	fs.StringVar(&f.reference, "r", "", "Display the last modification time of FILE")
+
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "date [-u] [-d FILE] [+format] | date [-u] [-d FILE] [MMDDhhmm[CC]YY[.ss]]\n\n")
+		fmt.Fprintf(fs.Output(), "date prints the date.\n")
+		fmt.Fprintf(fs.Output(), "Options:\n")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(unixflag.ArgsToGoArgs(args)); err != nil {
+		return err
+	}
+
 	rc := RealClock{}
-	if err := run(flag.Args(), flags.universal, flags.reference, rc, os.Stdout); err != nil {
+	if err := run(flag.Args(), f.universal, f.reference, rc, c.Stdout); err != nil {
 		log.Fatalf("date: %v", err)
 	}
+
+	return nil
 }

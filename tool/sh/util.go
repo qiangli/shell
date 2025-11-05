@@ -22,7 +22,7 @@ func ClearAllEnv(keeps []string) {
 	}
 }
 
-func decodeFileFlag(flag int) string {
+func DecodeFileFlag(flag int) string {
 	var parts []string
 	if flag&os.O_RDONLY != 0 {
 		parts = append(parts, "O_RDONLY")
@@ -51,6 +51,6 @@ func decodeFileFlag(flag int) string {
 	return strings.Join(parts, " | ")
 }
 
-func decodeFilePerm(perm fs.FileMode) string {
+func DecodeFilePerm(perm fs.FileMode) string {
 	return fmt.Sprintf("%#o", perm.Perm())
 }

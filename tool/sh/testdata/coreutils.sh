@@ -13,7 +13,8 @@ echo /agent:gpte/gen_entrypoint main > $DIR/entry_dict
 # cd $DIR
 # pwd
 
-cat $DIR/code_dict $DIR/entry_dict | tac > $DIR/file_dict
-cat $DIR/file_dict | shasum
+cat $DIR/code_dict $DIR/entry_dict  > $DIR/file_dict
+head $DIR/file_dict 
+shasum $DIR/file_dict 
 
 exit 0

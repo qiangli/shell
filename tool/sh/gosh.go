@@ -18,9 +18,7 @@ import (
 // If no arguments are provided, it will execute in interactive mode
 // if standard input supports it.
 // This function manages errors and exits appropriately.
-func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
-	script, args := parseFlags(args)
-
+func Gosh(ctx context.Context, vs *VirtualSystem, script string, args []string) error {
 	err := Run(ctx, vs, script, args)
 	var es interp.ExitStatus
 	if errors.As(err, &es) {
@@ -34,8 +32,8 @@ func Gosh(ctx context.Context, vs *VirtualSystem, args []string) error {
 }
 
 func Run(parent context.Context, vs *VirtualSystem, script string, args []string) error {
-	ctx, cancel := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
-	defer cancel()
+	ctx, _ := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
+	// defer cancel()
 
 	if script != "" {
 		return vs.RunScript(ctx, script)
@@ -58,16 +56,20 @@ func Run(parent context.Context, vs *VirtualSystem, script string, args []string
 	return vs.RunReader(ctx)
 }
 
-// Return script, non flag args
-func parseFlags(args []string) (string, []string) {
+// Parse parses flag definitions from the argument list, which should not
+// include the command name.
+// Return root, script, and remaining non flag args
+func ParseFlags(args []string) (string, string, []string) {
 	fs := flag.NewFlagSet("gosh", flag.ContinueOnError)
+	var rootptr = fs.String("root", "", "Specify the root directory")
 	var command = fs.String("c", "", "script to run")
 
 	err := fs.Parse(args)
+
 	if err != nil {
 		fmt.Println("Error parsing flags:", err)
-		return "", args
+		return "", "", args
 	}
 
-	return *command, fs.Args()
+	return *rootptr, *command, fs.Args()
 }

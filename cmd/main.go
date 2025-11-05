@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,12 +12,7 @@ import (
 )
 
 func main() {
-	var rootptr = flag.String("root", "", "Specify the root directory")
-	flag.Parse()
-
-	args := flag.Args()
-
-	var root = *rootptr
+	root, script, args := sh.ParseFlags(os.Args[1:])
 	if root == "" {
 		root, _ = os.Getwd()
 	}
@@ -40,7 +34,7 @@ func main() {
 	vs := sh.NewVirtualSystem(root, los, lfs, ioe)
 	vs.ExecHandler = sh.NewDummyExecHandler(vs)
 
-	if err := sh.Gosh(context.Background(), vs, args); err != nil {
+	if err := sh.Gosh(context.Background(), vs, script, args); err != nil {
 		os.Exit(1)
 	}
 }

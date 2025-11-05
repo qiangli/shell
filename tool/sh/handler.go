@@ -48,11 +48,11 @@ func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 			return did, err
 		}
 
-		// bash subshell
-		if IsShell(args[0]) {
-			err := Gosh(ctx, vs, args)
-			return true, err
-		}
+		// // bash subshell
+		// if IsShell(args[0]) {
+		// 	err := Gosh(ctx, vs, "", args)
+		// 	return true, err
+		// }
 
 		// block other commands
 		fmt.Fprintf(vs.IOE.Stderr, "command not supported: %s %+v\n", args[0], args[1:])
@@ -64,9 +64,9 @@ func VirtualOpenHandler(vs *VirtualSystem) interp.OpenHandlerFunc {
 	return func(ctx context.Context, path string, flag int, perm fs.FileMode) (io.ReadWriteCloser, error) {
 		mc := interp.HandlerCtx(ctx)
 		//
-		fmt.Fprintf(vs.IOE.Stdout, "Opening path: %s\n", path)
-		fmt.Fprintf(vs.IOE.Stdout, "Flags: %s\n", decodeFileFlag(flag))
-		fmt.Fprintf(vs.IOE.Stdout, "Permissions: %s\n", decodeFilePerm(perm))
+		// fmt.Fprintf(vs.IOE.Stdout, "Opening path: %s\n", path)
+		// fmt.Fprintf(vs.IOE.Stdout, "Flags: %s\n", DecodeFileFlag(flag))
+		// fmt.Fprintf(vs.IOE.Stdout, "Permissions: %s\n", DecodeFilePerm(perm))
 
 		//
 		if runtime.GOOS == "windows" && path == "/dev/null" {

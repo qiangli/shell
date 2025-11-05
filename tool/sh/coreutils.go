@@ -6,6 +6,7 @@ import (
 
 	"github.com/qiangli/shell/tool/coreutils/core/backoff"
 	"github.com/qiangli/shell/tool/coreutils/core/basename"
+	"github.com/qiangli/shell/tool/coreutils/core/cat"
 	"github.com/qiangli/shell/tool/coreutils/core/date"
 	"github.com/qiangli/shell/tool/coreutils/core/dirname"
 	"github.com/qiangli/shell/tool/coreutils/core/head"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/u-root/u-root/pkg/core"
 	"github.com/u-root/u-root/pkg/core/base64"
-	"github.com/u-root/u-root/pkg/core/cat"
 	"github.com/u-root/u-root/pkg/core/chmod"
 	"github.com/u-root/u-root/pkg/core/cp"
 	"github.com/u-root/u-root/pkg/core/find"
@@ -96,13 +96,17 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return true, err
 	}
 
+	open := func(s string) (*os.File, error) {
+		return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+	}
+
 	switch args[0] {
 	case "base64":
 		return runCmd(base64.New())
 	case "basename":
 		return runCmd(basename.New())
 	case "cat":
-		return runCmd(cat.New())
+		return runCmd(cat.New(open))
 	case "chmod":
 		return runCmd(chmod.New())
 	case "cp":
@@ -116,9 +120,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "gzip":
 		return runCmd(gzip.New())
 	case "head":
-		return runCmd(head.New(func(s string) (*os.File, error) {
-			return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
-		}))
+		return runCmd(head.New(open))
 	case "ls":
 		return runCmd(ls.New())
 	case "mkdir":
@@ -134,9 +136,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "tac":
 		return runCmd(tac.New())
 	case "tail":
-		return runCmd(tail.New(func(s string) (*os.File, error) {
-			return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
-		}))
+		return runCmd(tail.New(open))
 	case "tar":
 		return runCmd(tar.New())
 	case "touch":

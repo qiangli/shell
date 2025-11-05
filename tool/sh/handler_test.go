@@ -47,7 +47,8 @@ func TestRunPath(t *testing.T) {
 	tests := []struct {
 		script string
 	}{
-		{"testdata/test.sh"},
+		// {"testdata/test.sh"},
+		{"testdata/coreutils.sh"},
 	}
 
 	vs := NewLocalSystem("./", ioe)

@@ -60,9 +60,14 @@ func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {
 	}
 }
 
-func VirtualOpenHandler(ws vfs.Workspace) interp.OpenHandlerFunc {
+func VirtualOpenHandler(vs *VirtualSystem) interp.OpenHandlerFunc {
 	return func(ctx context.Context, path string, flag int, perm fs.FileMode) (io.ReadWriteCloser, error) {
 		mc := interp.HandlerCtx(ctx)
+		//
+		fmt.Fprintf(vs.IOE.Stdout, "Opening path: %s\n", path)
+		fmt.Fprintf(vs.IOE.Stdout, "Flags: %s\n", decodeFileFlag(flag))
+		fmt.Fprintf(vs.IOE.Stdout, "Permissions: %s\n", decodeFilePerm(perm))
+
 		//
 		if runtime.GOOS == "windows" && path == "/dev/null" {
 			path = "NUL"
@@ -73,19 +78,19 @@ func VirtualOpenHandler(ws vfs.Workspace) interp.OpenHandlerFunc {
 		} else if path != "" && !filepath.IsAbs(path) {
 			path = filepath.Join(mc.Dir, path)
 		}
-		return ws.OpenFile(path, flag, perm)
+		return vs.Workspace.OpenFile(path, flag, perm)
 	}
 }
 
-func VirtualReadDirHandler2(ws vfs.Workspace) interp.ReadDirHandlerFunc2 {
+func VirtualReadDirHandler2(vs *VirtualSystem) interp.ReadDirHandlerFunc2 {
 	return func(ctx context.Context, path string) ([]fs.DirEntry, error) {
-		return ws.ReadDir(path)
+		return vs.Workspace.ReadDir(path)
 	}
 }
 
-func VirtualStatHandler(ws vfs.Workspace) interp.StatHandlerFunc {
+func VirtualStatHandler(vs *VirtualSystem) interp.StatHandlerFunc {
 	return func(ctx context.Context, path string, followSymlinks bool) (fs.FileInfo, error) {
-		if v, ok := ws.(vfs.FileStat); ok {
+		if v, ok := vs.Workspace.(vfs.FileStat); ok {
 			if !followSymlinks {
 				return v.Lstat(path)
 			} else {
@@ -95,7 +100,7 @@ func VirtualStatHandler(ws vfs.Workspace) interp.StatHandlerFunc {
 		if followSymlinks {
 			return nil, fmt.Errorf("not supported")
 		}
-		return ws.FileInfo(path)
+		return vs.Workspace.FileInfo(path)
 	}
 }
 

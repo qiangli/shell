@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"mvdan.cc/sh/v3/expand"
@@ -103,6 +104,7 @@ func NewVirtualSystem(s vos.System, ws vfs.Workspace, ioe *IOE) *VirtualSystem {
 }
 
 func NewLocalSystem(root string, ioe *IOE) *VirtualSystem {
+	root, _ = filepath.Abs(root)
 	return NewVirtualSystem(vos.NewLocalSystem(root), vfs.NewLocalFS(root), ioe)
 }
 
@@ -112,9 +114,9 @@ func (vs *VirtualSystem) NewRunner(opts ...interp.RunnerOption) (*interp.Runner,
 		return nil, err
 	}
 
-	interp.OpenHandler(VirtualOpenHandler(vs.Workspace))(r)
-	interp.ReadDirHandler2(VirtualReadDirHandler2(vs.Workspace))(r)
-	interp.StatHandler(VirtualStatHandler(vs.Workspace))(r)
+	interp.OpenHandler(VirtualOpenHandler(vs))(r)
+	interp.ReadDirHandler2(VirtualReadDirHandler2(vs))(r)
+	interp.StatHandler(VirtualStatHandler(vs))(r)
 
 	//
 	var env = vs.System.Env()

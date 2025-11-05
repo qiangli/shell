@@ -8,7 +8,10 @@ require (
 	github.com/c2fo/vfs/v7 v7.10.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/qiangli/filesearch v0.0.0-20250727212022-dcfddd1c92de
+	github.com/rck/unit v0.0.3
+	github.com/u-root/cpuid v0.0.1-0.20250320140348-cc5fe81d966c
 	github.com/u-root/u-root v0.15.0
+	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/sys v0.36.0
 	golang.org/x/term v0.35.0
@@ -85,7 +88,7 @@ require (
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/shiena/ansicolor v0.0.0-20230509054315-a9deabde6e02 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
-	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
+	github.com/u-root/gobusybox/src v0.0.0-20250101170133-2e884e4509c7 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.38.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
@@ -96,11 +99,13 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	golang.org/x/crypto v0.42.0 // indirect
+	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.45.0 // indirect
 	golang.org/x/oauth2 v0.31.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
 	google.golang.org/api v0.252.0 // indirect
 	google.golang.org/genproto v0.0.0-20251007200510-49b9836ed3ff // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251007200510-49b9836ed3ff // indirect
@@ -108,4 +113,5 @@ require (
 	google.golang.org/grpc v1.76.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	pack.ag/tftp v1.0.1-0.20181129014014-07909dfbde3c // indirect
 )

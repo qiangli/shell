@@ -9,8 +9,10 @@ import (
 	"github.com/qiangli/shell/tool/coreutils/core/dirname"
 	"github.com/qiangli/shell/tool/coreutils/core/head"
 	"github.com/qiangli/shell/tool/coreutils/core/tail"
-
+	"github.com/qiangli/shell/tool/coreutils/core/wget"
 	"github.com/qiangli/shell/tool/coreutils/exp/tac"
+
+	"github.com/u-root/u-root/pkg/core"
 	"github.com/u-root/u-root/pkg/core/base64"
 	"github.com/u-root/u-root/pkg/core/cat"
 	"github.com/u-root/u-root/pkg/core/chmod"
@@ -26,15 +28,28 @@ import (
 	"github.com/u-root/u-root/pkg/core/tar"
 	"github.com/u-root/u-root/pkg/core/touch"
 	"github.com/u-root/u-root/pkg/core/xargs"
-
-	"github.com/u-root/u-root/pkg/core"
 	"golang.org/x/exp/slices"
 )
+
+// tool/coreutils/core/cmp/
+// tool/coreutils/core/date/
+// tool/coreutils/core/grep/
+// tool/coreutils/core/md5sum/
+// tool/coreutils/core/seq/
+// tool/coreutils/core/sleep/
+// tool/coreutils/core/sort/
+// tool/coreutils/core/tee/
+// tool/coreutils/core/time/
+// tool/coreutils/core/timeout/
+// tool/coreutils/core/truncate/
+// tool/coreutils/core/uniq/
+// tool/coreutils/core/wc/
+//
 
 // internal commands
 var CoreUtilsCommands = []string{
 	"base64", "basename", "cat", "chmod", "cp", "dirname", "find", "gzip", "head", "ls", "mkdir",
-	"mktemp", "mv", "rm", "shasum", "tac", "tail", "tar", "touch", "xargs",
+	"mktemp", "mv", "rm", "shasum", "tac", "tail", "tar", "touch", "wget", "xargs",
 }
 
 // bash commands
@@ -123,6 +138,8 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(tar.New())
 	case "touch":
 		return runCmd(touch.New())
+	case "wget":
+		return runCmd(wget.New())
 	case "xargs":
 		return runCmd(xargs.New())
 	default:

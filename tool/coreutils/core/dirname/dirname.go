@@ -21,7 +21,7 @@ import (
 
 var ErrNoArg = errors.New("missing operand")
 
-func (c *command) run(out io.Writer, args []string) error {
+func run(out io.Writer, args []string) error {
 	if len(args) < 1 {
 		return ErrNoArg
 	}
@@ -38,7 +38,7 @@ func (c *command) run(out io.Writer, args []string) error {
 // 	}
 // }
 
-// command implements the cat core utility.
+// command implements the dirname core utility.
 type command struct {
 	core.Base
 }
@@ -62,7 +62,7 @@ func (c *command) Run(args ...string) error {
 func (c *command) RunContext(ctx context.Context, args ...string) error {
 	// var f flags
 
-	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs := flag.NewFlagSet("dirname", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 
 	// fs.BoolVar(&f.u, "u", false, "ignored")
@@ -78,7 +78,7 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	if err := c.run(c.Stdout, fs.Args()); err != nil {
+	if err := run(c.Stdout, fs.Args()); err != nil {
 		return err
 	}
 

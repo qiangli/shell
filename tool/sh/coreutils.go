@@ -2,10 +2,14 @@ package sh
 
 import (
 	"context"
+	"os"
 
 	"github.com/qiangli/shell/tool/coreutils/core/backoff"
 	"github.com/qiangli/shell/tool/coreutils/core/basename"
 	"github.com/qiangli/shell/tool/coreutils/core/dirname"
+	"github.com/qiangli/shell/tool/coreutils/core/head"
+	"github.com/qiangli/shell/tool/coreutils/core/tail"
+
 	"github.com/qiangli/shell/tool/coreutils/exp/tac"
 	"github.com/u-root/u-root/pkg/core/base64"
 	"github.com/u-root/u-root/pkg/core/cat"
@@ -29,8 +33,8 @@ import (
 
 // internal commands
 var CoreUtilsCommands = []string{
-	"base64", "basename", "cat", "chmod", "cp", "dirname", "find", "gzip", "ls", "mkdir",
-	"mktemp", "mv", "rm", "shasum", "tac", "tar", "touch", "xargs",
+	"base64", "basename", "cat", "chmod", "cp", "dirname", "find", "gzip", "head", "ls", "mkdir",
+	"mktemp", "mv", "rm", "shasum", "tac", "tail", "tar", "touch", "xargs",
 }
 
 // bash commands
@@ -93,6 +97,10 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(find.New())
 	case "gzip":
 		return runCmd(gzip.New())
+	case "head":
+		return runCmd(head.New(func(s string) (*os.File, error) {
+			return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+		}))
 	case "ls":
 		return runCmd(ls.New())
 	case "mkdir":
@@ -107,6 +115,10 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(shasum.New())
 	case "tac":
 		return runCmd(tac.New())
+	case "tail":
+		return runCmd(tail.New(func(s string) (*os.File, error) {
+			return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+		}))
 	case "tar":
 		return runCmd(tar.New())
 	case "touch":

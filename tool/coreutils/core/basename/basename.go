@@ -24,7 +24,7 @@ import (
 
 var errUsage = errors.New("usage: basename NAME [SUFFIX]")
 
-func (c *command) run(w io.Writer, args []string) error {
+func run(w io.Writer, args []string) error {
 	switch len(args) {
 	case 2:
 		fileName := filepath.Base(args[0])
@@ -48,7 +48,7 @@ func (c *command) run(w io.Writer, args []string) error {
 // 	}
 // }
 
-// command implements the cat core utility.
+// command implements the basename core utility.
 type command struct {
 	core.Base
 }
@@ -72,7 +72,7 @@ func (c *command) Run(args ...string) error {
 func (c *command) RunContext(ctx context.Context, args ...string) error {
 	// var f flags
 
-	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs := flag.NewFlagSet("basename", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 
 	// fs.BoolVar(&f.u, "u", false, "ignored")
@@ -88,7 +88,7 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	if err := c.run(c.Stdout, fs.Args()); err != nil {
+	if err := run(c.Stdout, fs.Args()); err != nil {
 		return err
 	}
 

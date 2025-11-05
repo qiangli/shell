@@ -27,21 +27,6 @@ import (
 	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
 
-// command implements the cat core utility.
-type command struct {
-	core.Base
-}
-
-// New creates a new cat command.
-func New() core.Command {
-	c := &command{}
-	c.Init()
-	return c
-}
-
-type flags struct {
-}
-
 const ReadSize int64 = 4096
 
 var errStdin = fmt.Errorf("can't reverse lines from stdin; can't seek")
@@ -51,7 +36,7 @@ type ReadAtSeeker interface {
 	io.Seeker
 }
 
-func (z *command) tacOne(w io.Writer, r ReadAtSeeker) error {
+func tacOne(w io.Writer, r ReadAtSeeker) error {
 	var b [ReadSize]byte
 	// Get current EOF. While the file may be growing, there's
 	// only so much we can do.
@@ -97,7 +82,7 @@ func (z *command) tacOne(w io.Writer, r ReadAtSeeker) error {
 	return nil
 }
 
-func (z *command) tac(w io.Writer, files []string) error {
+func tac(w io.Writer, files []string) error {
 	if len(files) == 0 {
 		return errStdin
 	}
@@ -106,7 +91,7 @@ func (z *command) tac(w io.Writer, files []string) error {
 		if err != nil {
 			return err
 		}
-		err = z.tacOne(w, f)
+		err = tacOne(w, f)
 		f.Close() // Don't defer, you might get EMFILE for no good reason.
 		if err != nil {
 			return err
@@ -123,15 +108,30 @@ func (z *command) tac(w io.Writer, files []string) error {
 // 	}
 // }
 
+// command implements the cat core utility.
+type command struct {
+	core.Base
+}
+
+// New creates a new tac command.
+func New() core.Command {
+	c := &command{}
+	c.Init()
+	return c
+}
+
+type flags struct {
+}
+
 // Run executes the command with a `context.Background()`.
-func (z *command) Run(args ...string) error {
-	return z.RunContext(context.Background(), args...)
+func (c *command) Run(args ...string) error {
+	return c.RunContext(context.Background(), args...)
 }
 
 // RunContext executes the command.
-func (z *command) RunContext(ctx context.Context, args ...string) error {
+func (c *command) RunContext(ctx context.Context, args ...string) error {
 	fs := flag.NewFlagSet("tac", flag.ContinueOnError)
-	fs.SetOutput(z.Stderr)
+	fs.SetOutput(c.Stderr)
 
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "Usage: tac <file...>\n\n")
@@ -145,7 +145,7 @@ func (z *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	if err := z.tac(z.Stdout, fs.Args()); err != nil {
+	if err := tac(c.Stdout, fs.Args()); err != nil {
 		return err
 	}
 

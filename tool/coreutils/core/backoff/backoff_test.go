@@ -5,16 +5,13 @@
 package backoff
 
 import (
-	// "bytes"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
-	// "regexp"
 	"strings"
 	"testing"
 	"time"
-	// "github.com/u-root/u-root/pkg/testutil"
 )
 
 func TestRunIt(t *testing.T) {

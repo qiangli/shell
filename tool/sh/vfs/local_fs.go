@@ -5,12 +5,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 )
+
+// partly adapted from https://github.com/mark3labs/mcp-filesystem-server/tree/main/filesystemserver/handler
 
 // Local fs is a workspace
 type LocalFS struct {
 	root string
+
+	allowedDirs []string
 }
 
 func NewLocalFS(root string) Workspace {
@@ -101,15 +104,15 @@ func (s *LocalFS) Locator(path string) (string, error) {
 	return s.validatePath(path)
 }
 
-func (s *LocalFS) validatePath(path string) (string, error) {
-	path = filepath.Clean(path)
-	rel := strings.TrimPrefix(path, s.root)
-	abs, err := filepath.Abs(filepath.Join(s.root, rel))
-	if err != nil {
-		return "", fmt.Errorf("invalid path %q: %w", path, err)
-	}
-	return abs, nil
-}
+// func (s *LocalFS) validatePath(path string) (string, error) {
+// 	path = filepath.Clean(path)
+// 	rel := strings.TrimPrefix(path, s.root)
+// 	abs, err := filepath.Abs(filepath.Join(s.root, rel))
+// 	if err != nil {
+// 		return "", fmt.Errorf("invalid path %q: %w", path, err)
+// 	}
+// 	return abs, nil
+// }
 
 func (s *LocalFS) getFileStats(path string) (*FileInfo, error) {
 	info, err := os.Stat(path)

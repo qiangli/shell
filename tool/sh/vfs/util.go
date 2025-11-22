@@ -3,9 +3,14 @@ package vfs
 import (
 	"bytes"
 	"fmt"
+	"mime"
+	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
+	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	pt "github.com/qiangli/filesearch"
 )
 
@@ -121,4 +126,77 @@ func Search(pattern string, path string, o *SearchOptions) (string, error) {
 	}
 
 	return stdoutBuf.String(), nil
+}
+
+// detectMimeType tries to determine the MIME type of a file
+func detectMimeType(path string) string {
+	// Use mimetype library for more accurate detection
+	mtype, err := mimetype.DetectFile(path)
+	if err != nil {
+		// Fallback to extension-based detection if file can't be read
+		ext := filepath.Ext(path)
+		if ext != "" {
+			mimeType := mime.TypeByExtension(ext)
+			if mimeType != "" {
+				return mimeType
+			}
+		}
+		return "application/octet-stream" // Default
+	}
+
+	return mtype.String()
+}
+
+// isTextFile determines if a file is likely a text file based on MIME type
+func isTextFile(mimeType string) bool {
+	// Check for common text MIME types
+	if strings.HasPrefix(mimeType, "text/") {
+		return true
+	}
+
+	// Common application types that are text-based
+	textApplicationTypes := []string{
+		"application/json",
+		"application/xml",
+		"application/javascript",
+		"application/x-javascript",
+		"application/typescript",
+		"application/x-typescript",
+		"application/x-yaml",
+		"application/yaml",
+		"application/toml",
+		"application/x-sh",
+		"application/x-shellscript",
+	}
+
+	if slices.Contains(textApplicationTypes, mimeType) {
+		return true
+	}
+
+	// Check for +format types
+	if strings.Contains(mimeType, "+xml") ||
+		strings.Contains(mimeType, "+json") ||
+		strings.Contains(mimeType, "+yaml") {
+		return true
+	}
+
+	// Common code file types that might be misidentified
+	if strings.HasPrefix(mimeType, "text/x-") {
+		return true
+	}
+
+	if strings.HasPrefix(mimeType, "application/x-") &&
+		(strings.Contains(mimeType, "script") ||
+			strings.Contains(mimeType, "source") ||
+			strings.Contains(mimeType, "code")) {
+		return true
+	}
+
+	return false
+}
+
+// isImageFile determines if a file is an image based on MIME type
+func isImageFile(mimeType string) bool {
+	return strings.HasPrefix(mimeType, "image/") ||
+		(mimeType == "application/xml" && strings.HasSuffix(strings.ToLower(mimeType), ".svg"))
 }

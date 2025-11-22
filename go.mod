@@ -7,6 +7,7 @@ toolchain go1.24.9
 require (
 	github.com/c2fo/vfs/v7 v7.10.0
 	github.com/cenkalti/backoff/v4 v4.1.3
+	github.com/gabriel-vasile/mimetype v1.4.11
 	github.com/qiangli/filesearch v0.0.0-20250727212022-dcfddd1c92de
 	github.com/rck/unit v0.0.3
 	github.com/u-root/cpuid v0.0.1-0.20250320140348-cc5fe81d966c

@@ -16,7 +16,10 @@ type FileSystem interface {
 	CreateDirectory(string) error
 	RenameFile(string, string) error
 	FileInfo(string) (*FileInfo, error)
-	// EditFile
+	// DeleteFile(string) error
+	CopyFile(string, string) error
+	EditFile(string, string, string) (string, error)
+	Tree(string, int, bool) (string, error)
 	SearchFiles(pattern string, path string, options *SearchOptions) (string, error)
 }
 

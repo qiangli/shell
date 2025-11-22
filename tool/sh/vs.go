@@ -3,7 +3,6 @@ package sh
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,13 +14,6 @@ import (
 	"github.com/qiangli/shell/tool/sh/vfs"
 	"github.com/qiangli/shell/tool/sh/vos"
 )
-
-// standard IO
-type IOE struct {
-	Stdin  io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
-}
 
 type ExecHandler func(context.Context, []string) (bool, error)
 

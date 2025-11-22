@@ -8,6 +8,7 @@ import (
 )
 
 // partly adapted from https://github.com/mark3labs/mcp-filesystem-server/tree/main/filesystemserver/handler
+// https://github.com/mark3labs/mcp-filesystem-server/tree/main
 
 // Local fs is a workspace
 type LocalFS struct {
@@ -19,7 +20,8 @@ type LocalFS struct {
 func NewLocalFS(root string) Workspace {
 	root = filepath.Clean(root)
 	return &LocalFS{
-		root: root,
+		root:        root,
+		allowedDirs: []string{root},
 	}
 }
 
@@ -133,18 +135,6 @@ func (s *LocalFS) getFileStats(path string) (*FileInfo, error) {
 		//
 		Info: info,
 	}, nil
-}
-
-func (s *LocalFS) SearchFiles(pattern string, path string, options *SearchOptions) (string, error) {
-	if options == nil {
-		options = &SearchOptions{}
-	}
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return "", err
-	}
-
-	return Search(pattern, validPath, options)
 }
 
 func (s *LocalFS) OpenFile(path string, flag int, perm fs.FileMode) (*os.File, error) {

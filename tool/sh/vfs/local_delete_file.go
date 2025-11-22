@@ -5,6 +5,10 @@ import (
 	"os"
 )
 
+// Delete a file or directory from the file system
+// Parameters:
+// path (required): Path to the file or directory to delete,
+// recursive (optional): Whether to recursively delete directories (default: false)
 func (s *LocalFS) DeleteFile(
 	path string,
 	recursive bool,

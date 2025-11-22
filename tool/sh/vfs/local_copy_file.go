@@ -7,6 +7,10 @@ import (
 	"path/filepath"
 )
 
+// Copy files and directories
+// Parameters:
+// source (required): Source path of the file or directory,
+// destination (required): Destination path
 func (s *LocalFS) CopyFile(
 	source string,
 	destination string,

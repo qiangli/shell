@@ -16,11 +16,11 @@ type FileSystem interface {
 	CreateDirectory(string) error
 	RenameFile(string, string) error
 	FileInfo(string) (*FileInfo, error)
-	// DeleteFile(string) error
+	DeleteFile(string, bool) error
 	CopyFile(string, string) error
-	EditFile(string, string, string) (string, error)
+	EditFile(string, *EditOptions) (int, error)
 	Tree(string, int, bool) (string, error)
-	SearchFiles(pattern string, path string, options *SearchOptions) (string, error)
+	SearchFiles(string, *SearchOptions) (string, error)
 }
 
 type FileStore interface {
@@ -45,6 +45,8 @@ type Workspace interface {
 }
 
 type SearchOptions struct {
+	Pattern string
+
 	// Parse PATTERN as a regular expression
 	// Accepted syntax is the same
 	// as https://github.com/google/re2/wiki/Syntax

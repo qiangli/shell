@@ -18,6 +18,11 @@ type FileNode struct {
 	Children []*FileNode `json:"children,omitempty"`
 }
 
+// Returns a hierarchical JSON representation of a directory structure
+// Parameters:
+// path (required): Path of the directory to traverse,
+// depth (optional): Maximum depth to traverse (default: 3),
+// follow_symlinks (optional): Whether to follow symbolic links (default: false)
 func (s *LocalFS) Tree(
 	path string,
 	depth int,

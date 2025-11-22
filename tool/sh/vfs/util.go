@@ -76,7 +76,7 @@ func init() {
 // Help Options:
 //   -h, --help                Show this help message
 
-func Search(pattern string, path string, o *SearchOptions) (string, error) {
+func Search(path string, o *SearchOptions) (string, error) {
 	var args = []string{}
 
 	// output options
@@ -109,10 +109,10 @@ func Search(pattern string, path string, o *SearchOptions) (string, error) {
 	}
 
 	// args
-	if pattern == "" {
+	if o.Pattern == "" {
 		return "", fmt.Errorf("file serach pattern is required")
 	}
-	args = append(args, pattern)
+	args = append(args, o.Pattern)
 	if path != "" {
 		args = append(args, path)
 	}

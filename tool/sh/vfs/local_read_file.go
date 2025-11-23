@@ -3,9 +3,9 @@ package vfs
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -15,7 +15,7 @@ const (
 )
 
 type ReadOptions struct {
-	//  Number the output lines, starting at 1. (cat -n style).
+	// Number the output lines, starting at 1. (cat -n style).
 	Number bool
 
 	// Line offset to start reading from (0-indexed)
@@ -41,48 +41,43 @@ func (s *LocalFS) ReadFile(path string, o *ReadOptions) ([]byte, error) {
 		return os.ReadFile(validPath)
 	}
 
-	offset := o.Offset
-	if offset < 0 {
-		offset = 0
-	}
+	offset := max(o.Offset, 0)
 	limit := o.Limit
 	if limit <= 0 {
 		limit = math.MaxInt
 	}
 
-	lines, err := readLines(path, offset, limit)
+	lines, err := readFile(validPath, o.Number, offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	return []byte(lines), nil
 }
 
-func readLines(filePath string, offset int, limit int) (string, error) {
-	resolvedPath, err := filepath.Abs(filePath)
+func readFile(path string, number bool, offset int, limit int) (string, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return "", fmt.Errorf("error resolving file path: %v", err)
-	}
-
-	// Attempt to open the file
-	file, err := os.Open(resolvedPath)
-	if err != nil {
-		return "", fmt.Errorf("error opening file '%s': %v", filePath, err)
+		return "", fmt.Errorf("error opening file '%s': %v", path, err)
 	}
 	defer file.Close()
 
-	// Read file content
-	scanner := bufio.NewScanner(file)
+	return ReadLines(file, number, offset, limit)
+}
+
+// Read and format content with line numbers
+func ReadLines(reader io.Reader, number bool, offset int, limit int) (string, error) {
+	scanner := bufio.NewScanner(reader)
 	var content []string
 	for scanner.Scan() {
 		content = append(content, scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("error reading file '%s': %v", filePath, err)
+		return "", err
 	}
 
 	if len(content) == 0 {
-		return "Error: Empty file", nil
+		return "Empty content", nil
 	}
 
 	startIdx := offset
@@ -95,8 +90,11 @@ func readLines(filePath string, offset int, limit int) (string, error) {
 		endIdx = len(content)
 	}
 
-	selectedLines := content[startIdx:endIdx]
-	return FormatLinesWithLineNumbers(selectedLines, startIdx+1), nil
+	lines := content[startIdx:endIdx]
+	if !number {
+		return strings.Join(lines, "\n"), nil
+	}
+	return FormatLinesWithLineNumbers(lines, startIdx+1), nil
 }
 
 // FormatContentWithLineNumbers formats content with line numbers (cat -n style).

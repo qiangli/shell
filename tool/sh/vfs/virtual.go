@@ -24,7 +24,7 @@ type FileSystem interface {
 }
 
 type FileStore interface {
-	ReadFile(string) ([]byte, error)
+	ReadFile(string, *ReadOptions) ([]byte, error)
 	WriteFile(string, []byte) error
 
 	// aka:

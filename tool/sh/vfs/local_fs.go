@@ -84,15 +84,6 @@ func (s *LocalFS) FileInfo(path string) (*FileInfo, error) {
 	return info, nil
 }
 
-func (s *LocalFS) ReadFile(path string) ([]byte, error) {
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return os.ReadFile(validPath)
-}
-
 func (s *LocalFS) WriteFile(path string, content []byte) error {
 	validPath, err := s.validatePath(path)
 	if err != nil {

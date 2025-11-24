@@ -34,48 +34,58 @@ func (s *LocalFS) isPathInAllowedDirs(path string) bool {
 	return false
 }
 
-func (s *LocalFS) validatePath(requestedPath string) (string, error) {
-	// Always convert to absolute path first
-	abs, err := filepath.Abs(requestedPath)
+// func (s *LocalFS) validatePath(requestedPath string) (string, error) {
+// 	// Always convert to absolute path first
+// 	abs, err := filepath.Abs(requestedPath)
+// 	if err != nil {
+// 		return "", fmt.Errorf("invalid path: %w", err)
+// 	}
+
+// 	// Check if path is within allowed directories
+// 	if !s.isPathInAllowedDirs(abs) {
+// 		return "", fmt.Errorf(
+// 			"access denied - path outside allowed directories: %s",
+// 			abs,
+// 		)
+// 	}
+
+// 	// Handle symlinks
+// 	realPath, err := filepath.EvalSymlinks(abs)
+// 	if err != nil {
+// 		if !os.IsNotExist(err) {
+// 			return "", err
+// 		}
+// 		// For new files, check parent directory
+// 		parent := filepath.Dir(abs)
+// 		realParent, err := filepath.EvalSymlinks(parent)
+// 		if err != nil {
+// 			return "", fmt.Errorf("parent directory does not exist: %s", parent)
+// 		}
+
+// 		if !s.isPathInAllowedDirs(realParent) {
+// 			return "", fmt.Errorf(
+// 				"access denied - parent directory outside allowed directories",
+// 			)
+// 		}
+// 		return abs, nil
+// 	}
+
+// 	// Check if the real path (after resolving symlinks) is still within allowed directories
+// 	if !s.isPathInAllowedDirs(realPath) {
+// 		return "", fmt.Errorf(
+// 			"access denied - symlink target outside allowed directories",
+// 		)
+// 	}
+
+// 	return realPath, nil
+// }
+
+func (s *LocalFS) validatePath(path string) (string, error) {
+	path = filepath.Clean(path)
+	rel := strings.TrimPrefix(path, s.root)
+	abs, err := filepath.Abs(filepath.Join(s.root, rel))
 	if err != nil {
-		return "", fmt.Errorf("invalid path: %w", err)
+		return "", fmt.Errorf("invalid path %q: %w", path, err)
 	}
-
-	// Check if path is within allowed directories
-	if !s.isPathInAllowedDirs(abs) {
-		return "", fmt.Errorf(
-			"access denied - path outside allowed directories: %s",
-			abs,
-		)
-	}
-
-	// Handle symlinks
-	realPath, err := filepath.EvalSymlinks(abs)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return "", err
-		}
-		// For new files, check parent directory
-		parent := filepath.Dir(abs)
-		realParent, err := filepath.EvalSymlinks(parent)
-		if err != nil {
-			return "", fmt.Errorf("parent directory does not exist: %s", parent)
-		}
-
-		if !s.isPathInAllowedDirs(realParent) {
-			return "", fmt.Errorf(
-				"access denied - parent directory outside allowed directories",
-			)
-		}
-		return abs, nil
-	}
-
-	// Check if the real path (after resolving symlinks) is still within allowed directories
-	if !s.isPathInAllowedDirs(realPath) {
-		return "", fmt.Errorf(
-			"access denied - symlink target outside allowed directories",
-		)
-	}
-
-	return realPath, nil
+	return abs, nil
 }

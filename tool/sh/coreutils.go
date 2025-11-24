@@ -3,8 +3,6 @@ package sh
 import (
 	"context"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/qiangli/shell/tool/coreutils/core/backoff"
 	"github.com/qiangli/shell/tool/coreutils/core/basename"
@@ -100,13 +98,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	}
 
 	open := func(s string) (*os.File, error) {
-		path := filepath.Clean(s)
-		rel := strings.TrimPrefix(path, vs.Root)
-		abs, err := filepath.Abs(filepath.Join(vs.Root, rel))
-		if err != nil {
-			return nil, err
-		}
-		return vs.Workspace.OpenFile(abs, os.O_RDWR, 0o755)
+		return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
 	}
 
 	switch args[0] {

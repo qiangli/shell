@@ -26,6 +26,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"slices"
 	"syscall"
@@ -267,7 +268,7 @@ func tail(inFile *os.File, writer io.Writer, config tailConfig) error {
 
 func (c *command) run(reader *os.File, writer io.Writer, follow bool, numLines int, followDuration time.Duration, args []string) error {
 	var (
-		inFile *os.File
+		inFile fs.File
 		err    error
 	)
 
@@ -293,12 +294,16 @@ func (c *command) run(reader *os.File, writer io.Writer, follow bool, numLines i
 			fmt.Fprintf(writer, "==> %s <==\n", file)
 		}
 
-		inFile, err = c.Open(file)
+		inFile, err = c.f.Open(file)
 		if err != nil {
 			return err
 		}
 
-		err := tail(inFile, writer, config)
+		r, ok := inFile.(*os.File)
+		if !ok {
+			return fmt.Errorf("can not seek: %s", file)
+		}
+		err := tail(r, writer, config)
 		if err != nil {
 			return err
 		}
@@ -319,19 +324,19 @@ func (c *command) run(reader *os.File, writer io.Writer, follow bool, numLines i
 // }
 
 // command implements the tail core utility.
-type FileOpen func(string) (*os.File, error)
+// type FileOpen func(string) (*os.File, error)
 type command struct {
 	core.Base
 
-	Open FileOpen
+	f fs.FS
 
 	duration time.Duration
 }
 
 // New creates a new cat command.
-func New(fo FileOpen) *command {
+func New(f fs.FS) *command {
 	c := &command{
-		Open:     fo,
+		f:        f,
 		duration: 500 * time.Millisecond,
 	}
 	c.Init()

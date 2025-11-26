@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"sync"
@@ -87,11 +88,15 @@ func (c *command) tac(w io.Writer, files []string) error {
 		return errStdin
 	}
 	for _, name := range files {
-		f, err := c.Open(name)
+		f, err := c.f.Open(name)
 		if err != nil {
 			return err
 		}
-		err = c.tacOne(w, f)
+		r, ok := f.(*os.File)
+		if !ok {
+			return fmt.Errorf("can not seek: %s", name)
+		}
+		err = c.tacOne(w, r)
 		f.Close() // Don't defer, you might get EMFILE for no good reason.
 		if err != nil {
 			return err
@@ -109,18 +114,18 @@ func (c *command) tac(w io.Writer, files []string) error {
 // }
 
 // command implements the tac utility.
-type FileOpen func(string) (*os.File, error)
+// type FileOpen func(string) (*os.File, error)
 
 type command struct {
 	core.Base
 
-	Open FileOpen
+	f fs.FS
 }
 
 // New creates a new tac command.
-func New(fo FileOpen) core.Command {
+func New(f fs.FS) core.Command {
 	c := &command{
-		Open: fo,
+		f: f,
 	}
 	c.Init()
 	return c

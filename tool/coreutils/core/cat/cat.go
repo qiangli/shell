@@ -10,25 +10,26 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
+	"io/fs"
+	// "os"
 
 	"github.com/u-root/u-root/pkg/core"
 	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
 
 // command implements the cat core utility.
-type FileOpen func(string) (*os.File, error)
+// type FileOpen func(string) (*os.File, error)
 
 type command struct {
 	core.Base
 
-	Open FileOpen
+	f fs.FS
 }
 
 // New creates a new cat command.
-func New(fo FileOpen) core.Command {
+func New(f fs.FS) core.Command {
 	c := &command{
-		Open: fo,
+		f: f,
 	}
 	c.Init()
 	return c
@@ -64,14 +65,14 @@ func (c *command) runCat(args []string) error {
 		}
 
 		// resolvedFile := c.ResolvePath(file)
-		f, err := c.Open(file)
+		f, err := c.f.Open(file)
 		if err != nil {
 			return err
 		}
 
 		if err := c.cat(f, c.Stdout); err != nil {
 			f.Close()
-			return fmt.Errorf("failed to concatenate file %s to given writer", f.Name())
+			return fmt.Errorf("failed to concatenate file %s to given writer", file)
 		}
 		f.Close()
 	}

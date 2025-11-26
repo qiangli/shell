@@ -2,6 +2,7 @@ package sh
 
 import (
 	"context"
+	"io/fs"
 	"os"
 
 	"github.com/qiangli/shell/tool/coreutils/core/backoff"
@@ -89,6 +90,14 @@ func RunBackoff(ctx context.Context, vs *VirtualSystem, args []string) (bool, er
 	return true, err
 }
 
+type virtualFS struct {
+	vs *VirtualSystem
+}
+
+func (r *virtualFS) Open(s string) (fs.File, error) {
+	return r.vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+}
+
 func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, error) {
 	runCmd := func(cmd core.Command) (bool, error) {
 		cmd.SetIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)
@@ -97,8 +106,11 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return true, err
 	}
 
-	open := func(s string) (*os.File, error) {
-		return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+	// open := func(s string) (*os.File, error) {
+	// 	return vs.Workspace.OpenFile(s, os.O_RDWR, 0o755)
+	// }
+	fs := &virtualFS{
+		vs: vs,
 	}
 
 	switch args[0] {
@@ -107,7 +119,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "basename":
 		return runCmd(basename.New())
 	case "cat":
-		return runCmd(cat.New(open))
+		return runCmd(cat.New(fs))
 	case "chmod":
 		return runCmd(chmod.New())
 	case "cp":
@@ -121,7 +133,7 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "gzip":
 		return runCmd(gzip.New())
 	case "head":
-		return runCmd(head.New(open))
+		return runCmd(head.New(fs))
 	case "ls":
 		return runCmd(ls.New())
 	case "mkdir":
@@ -135,9 +147,9 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	case "shasum":
 		return runCmd(shasum.New())
 	case "tac":
-		return runCmd(tac.New(open))
+		return runCmd(tac.New(fs))
 	case "tail":
-		return runCmd(tail.New(open))
+		return runCmd(tail.New(fs))
 	case "tar":
 		return runCmd(tar.New())
 	case "touch":

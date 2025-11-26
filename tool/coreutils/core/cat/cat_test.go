@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -17,6 +18,17 @@ import (
 	"testing"
 	"testing/iotest"
 )
+
+type localFS struct {
+}
+
+func NewLocalFS() *localFS {
+	return &localFS{}
+}
+
+func (r *localFS) Open(s string) (fs.File, error) {
+	return os.Open(s)
+}
 
 // setup writes a set of files, putting 1 byte in each file.
 func setup(t *testing.T, data []byte) string {
@@ -47,7 +59,7 @@ func TestCat(t *testing.T) {
 		files = append(files, fmt.Sprintf("%v%d", filepath.Join(dir, "file"), i))
 	}
 
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	var stdin bytes.Buffer
 	cmd.SetIO(&stdin, &stdout, &stderr)
@@ -63,7 +75,7 @@ func TestCat(t *testing.T) {
 }
 
 func TestCatPipe(t *testing.T) {
-	cmd := New(os.Open).(*command) // Type assertion to access internal methods
+	cmd := New(NewLocalFS()).(*command) // Type assertion to access internal methods
 	var inputbuf bytes.Buffer
 	teststring := "testdata"
 	fmt.Fprintf(&inputbuf, "%s", teststring)
@@ -89,7 +101,7 @@ func TestRunFiles(t *testing.T) {
 		files = append(files, fmt.Sprintf("%v%d", filepath.Join(dir, "file"), i))
 	}
 
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	var stdin bytes.Buffer
 	cmd.SetIO(&stdin, &stdout, &stderr)
@@ -115,7 +127,7 @@ func TestRunFilesError(t *testing.T) {
 	filenotexist := "testdata/doesnotexist.txt"
 	files = append(files, filenotexist)
 
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	var stdin bytes.Buffer
 	cmd.SetIO(&stdin, &stdout, &stderr)
@@ -127,7 +139,7 @@ func TestRunFilesError(t *testing.T) {
 }
 
 func TestRunNoArgs(t *testing.T) {
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	cmd.SetIO(strings.NewReader("teststring"), &stdout, &stderr)
 
@@ -141,7 +153,7 @@ func TestRunNoArgs(t *testing.T) {
 }
 
 func TestIOErrors(t *testing.T) {
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	errReader := iotest.ErrReader(errors.New("read error"))
 	cmd.SetIO(errReader, &stdout, &stderr)
@@ -152,7 +164,7 @@ func TestIOErrors(t *testing.T) {
 	}
 
 	// Test with dash argument
-	cmd2 := New(os.Open)
+	cmd2 := New(NewLocalFS())
 	var stdout2, stderr2 bytes.Buffer
 	cmd2.SetIO(errReader, &stdout2, &stderr2)
 
@@ -177,7 +189,7 @@ func TestCatDash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	var stdout, stderr bytes.Buffer
 	var stdin bytes.Buffer
 	stdin.WriteString("line3\n")
@@ -207,7 +219,7 @@ func TestCatDash(t *testing.T) {
 // 		t.Fatal(err)
 // 	}
 
-// 	cmd := New(os.Open)
+// 	cmd := New(NewLocalFS())
 // 	var stdout, stderr bytes.Buffer
 // 	cmd.SetIO(bytes.NewReader(nil), &stdout, &stderr)
 // 	cmd.SetWorkingDir(tempDir)

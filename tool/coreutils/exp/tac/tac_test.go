@@ -7,10 +7,22 @@ package tac
 import (
 	"bytes"
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+type localFS struct {
+}
+
+func NewLocalFS() *localFS {
+	return &localFS{}
+}
+
+func (r *localFS) Open(s string) (fs.File, error) {
+	return os.Open(s)
+}
 
 func TestTac(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "tac1")
@@ -21,7 +33,7 @@ func TestTac(t *testing.T) {
 
 	stdout := &bytes.Buffer{}
 
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	cmd.SetIO(nil, stdout, nil)
 
 	// err = tac(stdout, []string{path})
@@ -37,7 +49,7 @@ func TestTac(t *testing.T) {
 }
 
 func TestTacStdin(t *testing.T) {
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	cmd.SetIO(os.Stdin, os.Stdout, os.Stderr)
 
 	// err := tac(nil, nil)

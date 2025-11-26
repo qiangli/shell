@@ -11,7 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
+	"io/fs"
 
 	"github.com/u-root/u-root/pkg/core"
 	"github.com/u-root/u-root/pkg/uroot/unixflag"
@@ -90,12 +90,12 @@ func (c *command) run(stdin io.Reader, stdout, stderr io.Writer, bytes, count in
 	}
 
 	for _, file := range files {
-		f, err := c.Open(file)
+		f, err := c.f.Open(file)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("head: %w", err))
 			continue
 		}
-		err = handle(f, f.Name())
+		err = handle(f, file)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
@@ -118,17 +118,17 @@ func (c *command) run(stdin io.Reader, stdout, stderr io.Writer, bytes, count in
 // }
 
 // command implements the head core utility.
-type FileOpen func(string) (*os.File, error)
+// type FileOpen func(string) (*os.File, error)
 type command struct {
 	core.Base
 
-	Open FileOpen
+	f fs.FS
 }
 
 // New creates a new cat command.
-func New(fo FileOpen) core.Command {
+func New(f fs.FS) core.Command {
 	c := &command{
-		Open: fo,
+		f: f,
 	}
 	c.Init()
 	return c

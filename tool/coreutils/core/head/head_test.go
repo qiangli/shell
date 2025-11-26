@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,8 +17,19 @@ import (
 	"testing"
 )
 
+type localFS struct {
+}
+
+func NewLocalFS() *localFS {
+	return &localFS{}
+}
+
+func (r *localFS) Open(s string) (fs.File, error) {
+	return os.Open(s)
+}
+
 func run(stdin io.Reader, stdout, stderr io.Writer, count, num int, files ...string) error {
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	if stderr == nil {
 		stderr = &bytes.Buffer{}
 	}

@@ -8,14 +8,26 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 )
 
+type localFS struct {
+}
+
+func NewLocalFS() *localFS {
+	return &localFS{}
+}
+
+func (r *localFS) Open(s string) (fs.File, error) {
+	return os.Open(s)
+}
+
 func run(stdin io.Reader, stdout io.Writer, follow bool, num int, followDuration time.Duration, args []string) error {
-	cmd := New(os.Open)
+	cmd := New(NewLocalFS())
 	cmd.duration = followDuration
 	cmd.SetIO(stdin, stdout, &bytes.Buffer{})
 	var a = []string{}

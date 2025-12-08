@@ -12,18 +12,23 @@ import (
 type FileSystem interface {
 	FileStore
 
+	// list_allowed_directories
+	// list_directory_with_sizes
 	ListDirectory(string) ([]string, error)
 	CreateDirectory(string) error
-	RenameFile(string, string) error
-	FileInfo(string) (*FileInfo, error)
+	MoveFile(string, string) error
+	GetFileInfo(string) (*FileInfo, error)
 	DeleteFile(string, bool) error
 	CopyFile(string, string) error
 	EditFile(string, *EditOptions) (int, error)
+	// directory_tree
 	Tree(string, int, bool) (string, error)
 	SearchFiles(string, *SearchOptions) (string, error)
 }
 
 type FileStore interface {
+	// read_text_file
+	// read_media_file
 	ReadFile(string, *ReadOptions) ([]byte, error)
 	WriteFile(string, []byte) error
 
@@ -42,6 +47,9 @@ type Workspace interface {
 
 	OpenFile(name string, flag int, perm fs.FileMode) (*os.File, error)
 	ReadDir(name string) ([]fs.DirEntry, error)
+
+	// read_multiple_files
+	// search_within_files
 }
 
 type SearchOptions struct {

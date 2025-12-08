@@ -100,7 +100,7 @@ func VirtualStatHandler(vs *VirtualSystem) interp.StatHandlerFunc {
 		if followSymlinks {
 			return nil, fmt.Errorf("not supported")
 		}
-		return vs.Workspace.FileInfo(path)
+		return vs.Workspace.GetFileInfo(path)
 	}
 }
 

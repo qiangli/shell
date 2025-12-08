@@ -57,7 +57,7 @@ func (s *LocalFS) CreateDirectory(path string) error {
 	return os.MkdirAll(validPath, 0755)
 }
 
-func (s *LocalFS) RenameFile(source, destination string) error {
+func (s *LocalFS) MoveFile(source, destination string) error {
 	validSource, err := s.validatePath(source)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (s *LocalFS) RenameFile(source, destination string) error {
 	return os.Rename(validSource, validDest)
 }
 
-func (s *LocalFS) FileInfo(path string) (*FileInfo, error) {
+func (s *LocalFS) GetFileInfo(path string) (*FileInfo, error) {
 	validPath, err := s.validatePath(path)
 	if err != nil {
 		return nil, err

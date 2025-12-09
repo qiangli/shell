@@ -61,7 +61,7 @@ func Run(parent context.Context, vs *VirtualSystem, script string, args []string
 // Return root, script, and remaining non flag args
 func ParseFlags(args []string) (string, string, []string) {
 	fs := flag.NewFlagSet("gosh", flag.ContinueOnError)
-	var rootptr = fs.String("root", "", "Specify the root directory")
+	var rootptr = fs.String("root", "", "Specify the workspace root directory")
 	var command = fs.String("c", "", "script to run")
 
 	err := fs.Parse(args)

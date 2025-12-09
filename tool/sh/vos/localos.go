@@ -6,62 +6,53 @@ import (
 	"maps"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"reflect"
-	"strings"
 	"sync"
+
+	"github.com/qiangli/shell/tool/sh/vfs"
 )
 
 type LocalSystem struct {
-	root string
-	dir  string
-	env  map[string]any
-	mu   sync.RWMutex
+	// roots []string
+	ws      vfs.Workspace
+	workdir string
+
+	env map[string]any
+	mu  sync.RWMutex
 
 	// exit call back
 	Exitf func(int)
 }
 
-func NewLocalSystem(root string) *LocalSystem {
+func NewLocalSystem(ws vfs.Workspace) (*LocalSystem, error) {
 	return &LocalSystem{
-		root: root,
-		dir:  root,
-		env:  make(map[string]any),
-	}
+		ws:  ws,
+		env: make(map[string]any),
+	}, nil
 }
 
 func (s *LocalSystem) Command(name string, arg ...string) *exec.Cmd {
 	e := exec.Command(name, arg...)
 	e.Env = s.Env()
-	e.Dir = s.dir
+	e.Dir = s.workdir
 	return e
 }
 
-func (s *LocalSystem) validatePath(path string) (string, error) {
-	path = filepath.Clean(path)
-	rel := strings.TrimPrefix(path, s.root)
-	abs, err := filepath.Abs(filepath.Join(s.root, rel))
-	if err != nil {
-		return "", fmt.Errorf("invalid path %q: %w", path, err)
-	}
-	return abs, nil
-}
-
 func (s *LocalSystem) Chdir(path string) error {
-	abs, err := s.validatePath(path)
+	abs, err := s.ws.Locator(path)
 	if err != nil {
 		return err
 	}
-	if info, err := os.Stat(abs); err != nil || !info.IsDir() {
+	if info, err := s.ws.Stat(abs); err != nil || !info.IsDir() {
 		return fmt.Errorf("invalid directory: %v", err)
 	}
-	s.dir = abs
+	s.workdir = abs
 	return os.Chdir(abs)
 }
 
 func (s *LocalSystem) Getwd() (string, error) {
-	// return os.Getwd()
-	return s.dir, nil
+	return os.Getwd()
+	// return s.dir, nil
 }
 
 // Env returns all environment variables as a name=value list.

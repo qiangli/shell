@@ -12,26 +12,29 @@ import (
 )
 
 func main() {
-	root, script, args := sh.ParseFlags(os.Args[1:])
-	if root == "" {
-		root, _ = os.Getwd()
+	ws, script, args := sh.ParseFlags(os.Args[1:])
+	if ws == "" {
+		ws, _ = os.Getwd()
 	}
 
-	root, _ = filepath.Abs(root)
-	if err := os.Chdir(root); err != nil {
+	ws, _ = filepath.Abs(ws)
+	if err := os.Chdir(ws); err != nil {
 		fmt.Printf("%v", err)
 		os.Exit(1)
 	}
 
-	los := vos.NewLocalSystem(root)
+	home, _ := os.UserHomeDir()
+	tmpdir := os.TempDir()
+
+	lfs, _ := vfs.NewLocalFS([]string{ws, home, tmpdir})
+	los, _ := vos.NewLocalSystem(lfs)
 	los.Exitf = func(code int) {
 		fmt.Printf("exit %v\n", code)
 		os.Exit(code)
 	}
 
-	lfs := vfs.NewLocalFS(root)
 	ioe := &sh.IOE{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	vs := sh.NewVirtualSystem(root, los, lfs, ioe)
+	vs := sh.NewVirtualSystem(los, lfs, ioe)
 	vs.ExecHandler = sh.NewDummyExecHandler(vs)
 
 	if err := sh.Gosh(context.Background(), vs, script, args); err != nil {

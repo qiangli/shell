@@ -12,8 +12,7 @@ import (
 type FileSystem interface {
 	FileStore
 
-	// list_allowed_directories
-	// list_directory_with_sizes
+	ListRoots() ([]string, error)
 	ListDirectory(string) ([]string, error)
 	CreateDirectory(string) error
 	MoveFile(string, string) error
@@ -21,14 +20,11 @@ type FileSystem interface {
 	DeleteFile(string, bool) error
 	CopyFile(string, string) error
 	EditFile(string, *EditOptions) (int, error)
-	// directory_tree
 	Tree(string, int, bool) (string, error)
 	SearchFiles(string, *SearchOptions) (string, error)
 }
 
 type FileStore interface {
-	// read_text_file
-	// read_media_file
 	ReadFile(string, *ReadOptions) ([]byte, error)
 	WriteFile(string, []byte) error
 
@@ -44,12 +40,12 @@ type FileStat interface {
 
 type Workspace interface {
 	FileSystem
+	FileStat
 
 	OpenFile(name string, flag int, perm fs.FileMode) (*os.File, error)
 	ReadDir(name string) ([]fs.DirEntry, error)
 
-	// read_multiple_files
-	// search_within_files
+	ReadMultipleFiles([]string) ([]string, error)
 }
 
 type SearchOptions struct {
@@ -88,6 +84,8 @@ type FileInfo struct {
 	Created  time.Time `json:"created"`
 	Modified time.Time `json:"modified"`
 	Accessed time.Time `json:"accessed"`
+
+	Mime string `json:"mime"`
 
 	// original info for local fs
 	Info fs.FileInfo `json:"-"`
@@ -141,7 +139,7 @@ func (r *FileInfo) Sys() any {
 
 func (f *FileInfo) String() string {
 	return fmt.Sprintf(
-		"IsDirectory: %t, IsFile: %t, IsSymlink: %t, Permissions: %s, Size: %d, Created: %s, Modified: %s, Accessed: %s",
+		"IsDirectory: %t, IsFile: %t, IsSymlink: %t, Permissions: %s, Size: %d, Created: %s, Modified: %s, Accessed: %s MIME Type: %s",
 		f.IsDirectory,
 		f.IsFile,
 		f.IsLink,
@@ -150,5 +148,6 @@ func (f *FileInfo) String() string {
 		f.Created.Format(time.RFC3339),
 		f.Modified.Format(time.RFC3339),
 		f.Accessed.Format(time.RFC3339),
+		f.Mime,
 	)
 }

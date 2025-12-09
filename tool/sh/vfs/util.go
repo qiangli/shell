@@ -1,6 +1,8 @@
 package vfs
 
 import (
+	"encoding/base64"
+	"fmt"
 	"mime"
 	"path/filepath"
 	"slices"
@@ -80,4 +82,12 @@ func IsTextFile(mimeType string) bool {
 func IsImageFile(mimeType string) bool {
 	return strings.HasPrefix(mimeType, "image/") ||
 		(mimeType == "application/xml" && strings.HasSuffix(strings.ToLower(mimeType), ".svg"))
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Schemes/data
+// data:[<media-type>][;base64],<data>
+func DataURL(mime string, raw []byte) string {
+	encoded := base64.StdEncoding.EncodeToString(raw)
+	d := fmt.Sprintf("data:%s;base64,%s", mime, encoded)
+	return d
 }

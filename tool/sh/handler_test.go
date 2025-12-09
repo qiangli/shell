@@ -25,8 +25,8 @@ func TestRunScript(t *testing.T) {
 		{"@ anonymous agent"},
 		{test_sh},
 	}
-
-	vs := NewLocalSystem("./", ioe)
+	roots := []string{"./"}
+	vs, _ := NewLocalSystem(roots, ioe)
 	vs.ExecHandler = NewDummyExecHandler(vs)
 
 	ctx := context.TODO()
@@ -51,8 +51,8 @@ func TestRunPath(t *testing.T) {
 		// {"testdata/core.sh"},
 		{"testdata/pipe.sh"},
 	}
-
-	vs := NewLocalSystem("./", ioe)
+	roots := []string{"./"}
+	vs, _ := NewLocalSystem(roots, ioe)
 	vs.ExecHandler = NewDummyExecHandler(vs)
 
 	vs.System.Setenv("city", "New York")

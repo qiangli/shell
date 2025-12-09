@@ -5,93 +5,138 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // partly adapted from https://github.com/mark3labs/mcp-filesystem-server/tree/main/filesystemserver/handler
 // https://github.com/mark3labs/mcp-filesystem-server/tree/main
 
+const (
+	// Maximum size for inline content (5MB)
+	MAX_INLINE_SIZE = 5 * 1024 * 1024
+	// Maximum size for base64 encoding (1MB)
+	MAX_BASE64_SIZE = 1 * 1024 * 1024
+	// Maximum number of search results to return (prevent excessive output)
+	MAX_SEARCH_RESULTS = 1000
+	// Maximum file size in bytes to search within (10MB)
+	MAX_SEARCHABLE_SIZE = 10 * 1024 * 1024
+)
+
 // Local fs is a workspace
 type LocalFS struct {
-	root string
-
+	// root string
 	allowedDirs []string
 }
 
-func NewLocalFS(root string) Workspace {
-	root = filepath.Clean(root)
-	return &LocalFS{
-		root:        root,
-		allowedDirs: []string{root},
-	}
-}
+// func NewLocalFS(root string) Workspace {
+// 	root = filepath.Clean(root)
+// 	return &LocalFS{
+// 		root:        root,
+// 		allowedDirs: []string{root},
+// 	}
+// }
 
-func (s *LocalFS) ListDirectory(path string) ([]string, error) {
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return nil, err
-	}
-
-	entries, err := os.ReadDir(validPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []string
-	for _, entry := range entries {
-		prefix := "File"
-		if entry.IsDir() {
-			prefix = "Direcotory"
+func NewLocalFS(allowedDirs []string) (Workspace, error) {
+	// Normalize and validate directories
+	normalized := make([]string, 0, len(allowedDirs))
+	for _, dir := range allowedDirs {
+		abs, err := filepath.Abs(dir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve path %s: %w", dir, err)
 		}
-		result = append(result, fmt.Sprintf("%s: %s", prefix, entry.Name()))
-	}
 
-	return result, nil
+		info, err := os.Stat(abs)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to access directory %s: %w",
+				abs,
+				err,
+			)
+		}
+		if !info.IsDir() {
+			return nil, fmt.Errorf("path is not a directory: %s", abs)
+		}
+
+		// Ensure the path ends with a separator to prevent prefix matching issues
+		// For example, /tmp/foo should not match /tmp/foobar
+		cleanPath := filepath.Clean(abs)
+		if !strings.HasSuffix(cleanPath, string(filepath.Separator)) {
+			cleanPath = cleanPath + string(filepath.Separator)
+		}
+		normalized = append(normalized, cleanPath)
+	}
+	return &LocalFS{
+		allowedDirs: normalized,
+	}, nil
 }
 
-func (s *LocalFS) CreateDirectory(path string) error {
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return err
-	}
+// func (s *LocalFS) ListDirectory(path string) ([]string, error) {
+// 	validPath, err := s.validatePath(path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return os.MkdirAll(validPath, 0755)
-}
+// 	entries, err := os.ReadDir(validPath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-func (s *LocalFS) MoveFile(source, destination string) error {
-	validSource, err := s.validatePath(source)
-	if err != nil {
-		return err
-	}
-	validDest, err := s.validatePath(destination)
-	if err != nil {
-		return err
-	}
+// 	var result []string
+// 	for _, entry := range entries {
+// 		prefix := "File"
+// 		if entry.IsDir() {
+// 			prefix = "Direcotory"
+// 		}
+// 		result = append(result, fmt.Sprintf("%s: %s", prefix, entry.Name()))
+// 	}
 
-	return os.Rename(validSource, validDest)
-}
+// 	return result, nil
+// }
 
-func (s *LocalFS) GetFileInfo(path string) (*FileInfo, error) {
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return nil, err
-	}
+// func (s *LocalFS) CreateDirectory(path string) error {
+// 	validPath, err := s.validatePath(path)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	info, err := s.getFileStats(validPath)
-	if err != nil {
-		return nil, err
-	}
+// 	return os.MkdirAll(validPath, 0755)
+// }
 
-	return info, nil
-}
+// func (s *LocalFS) MoveFile(source, destination string) error {
+// 	validSource, err := s.validatePath(source)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	validDest, err := s.validatePath(destination)
+// 	if err != nil {
+// 		return err
+// 	}
 
-func (s *LocalFS) WriteFile(path string, content []byte) error {
-	validPath, err := s.validatePath(path)
-	if err != nil {
-		return err
-	}
+// 	return os.Rename(validSource, validDest)
+// }
 
-	return os.WriteFile(validPath, content, 0644)
-}
+// func (s *LocalFS) GetFileInfo(path string) (*FileInfo, error) {
+// 	validPath, err := s.validatePath(path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	info, err := s.getFileStats(validPath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return info, nil
+// }
+
+// func (s *LocalFS) WriteFile(path string, content []byte) error {
+// 	validPath, err := s.validatePath(path)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return os.WriteFile(validPath, content, 0644)
+// }
 
 func (s *LocalFS) Locator(path string) (string, error) {
 	return s.validatePath(path)
@@ -107,26 +152,26 @@ func (s *LocalFS) Locator(path string) (string, error) {
 // 	return abs, nil
 // }
 
-func (s *LocalFS) getFileStats(path string) (*FileInfo, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return &FileInfo{}, err
-	}
-	isLink := (info.Mode() & os.ModeSymlink) != 0
+// func (s *LocalFS) getFileStats(path string) (*FileInfo, error) {
+// 	info, err := os.Stat(path)
+// 	if err != nil {
+// 		return &FileInfo{}, err
+// 	}
+// 	isLink := (info.Mode() & os.ModeSymlink) != 0
 
-	return &FileInfo{
-		IsDirectory: info.IsDir(),
-		IsFile:      info.Mode().IsRegular(),
-		IsLink:      isLink,
-		Permissions: fmt.Sprintf("%o", info.Mode().Perm()),
-		Length:      info.Size(),
-		Created:     info.ModTime(),
-		Modified:    info.ModTime(),
-		Accessed:    info.ModTime(),
-		//
-		Info: info,
-	}, nil
-}
+// 	return &FileInfo{
+// 		IsDirectory: info.IsDir(),
+// 		IsFile:      info.Mode().IsRegular(),
+// 		IsLink:      isLink,
+// 		Permissions: fmt.Sprintf("%o", info.Mode().Perm()),
+// 		Length:      info.Size(),
+// 		Created:     info.ModTime(),
+// 		Modified:    info.ModTime(),
+// 		Accessed:    info.ModTime(),
+// 		//
+// 		Info: info,
+// 	}, nil
+// }
 
 func (s *LocalFS) OpenFile(path string, flag int, perm fs.FileMode) (*os.File, error) {
 	validPath, err := s.validatePath(path)

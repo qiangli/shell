@@ -101,7 +101,8 @@ func (r *virtualFS) Open(s string) (fs.File, error) {
 func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, error) {
 	runCmd := func(cmd core.Command) (bool, error) {
 		cmd.SetIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)
-		cmd.SetWorkingDir(vs.Root)
+		workdir, _ := vs.System.Getwd()
+		cmd.SetWorkingDir(workdir)
 		err := cmd.RunContext(ctx, args[1:]...)
 		return true, err
 	}

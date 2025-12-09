@@ -28,32 +28,43 @@ func (s *LocalFS) Tree(
 	depth int,
 	follow bool,
 ) (string, error) {
+
+	// Handle empty or relative paths like "." or "./" by converting to absolute path
+	if path == "." || path == "./" {
+		// Get current working directory
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("Error resolving current directory: %v", err)
+		}
+		path = cwd
+	}
+
 	// Validate the path is within allowed directories
 	validPath, err := s.validatePath(path)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	// Check if it's a directory
 	info, err := os.Stat(validPath)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	if !info.IsDir() {
-		return "", err
+		return "", fmt.Errorf("Error: The specified path is not a directory: %s", path)
 	}
 
 	// Build the tree structure
 	tree, err := s.buildTree(validPath, depth, 0, follow)
 	if err != nil {
-		return "", nil
+		return "", fmt.Errorf("Error building directory tree: %v", err)
 	}
 
 	// Convert to JSON
 	jsonData, err := json.MarshalIndent(tree, "", "  ")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error generating JSON: %v", err)
 	}
 
 	return fmt.Sprintf("Directory tree for %s (max depth: %d):\n\n%s", validPath, depth, string(jsonData)), nil

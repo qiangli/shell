@@ -40,7 +40,7 @@ func (s *LocalFS) ListDirectory(path string) ([]string, error) {
 	var result []string
 	for _, entry := range entries {
 		entryPath := filepath.Join(validPath, entry.Name())
-		resourceURI := pathToResourceURI(entryPath)
+		resourceURI := PathToResourceURI(entryPath)
 
 		if entry.IsDir() {
 			result = append(result, fmt.Sprintf("[DIR]  %s (%s)\n", entry.Name(), resourceURI))

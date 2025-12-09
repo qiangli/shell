@@ -59,6 +59,5 @@ func (s *LocalFS) MoveFile(source, destination string) error {
 		return fmt.Errorf("Error moving file: %v", err)
 	}
 
-	// resourceURI := pathToResourceURI(validDest)
 	return nil
 }

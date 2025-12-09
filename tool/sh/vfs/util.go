@@ -91,3 +91,8 @@ func DataURL(mime string, raw []byte) string {
 	d := fmt.Sprintf("data:%s;base64,%s", mime, encoded)
 	return d
 }
+
+// PathToResourceURI converts a file path to a resource URI
+func PathToResourceURI(path string) string {
+	return "file://" + path
+}

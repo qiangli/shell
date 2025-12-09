@@ -45,7 +45,7 @@ func (s *LocalFS) ReadMultipleFiles(pathsSlice []string) ([]string, error) {
 
 		if info.IsDir() {
 			// For directories, return a resource reference instead
-			resourceURI := pathToResourceURI(validPath)
+			resourceURI := PathToResourceURI(validPath)
 			results = append(results, fmt.Sprintf("'%s' is a directory. Use list_directory tool or resource URI: %s", path, resourceURI))
 			continue
 		}
@@ -56,7 +56,7 @@ func (s *LocalFS) ReadMultipleFiles(pathsSlice []string) ([]string, error) {
 		// Check file size
 		if info.Size() > MAX_INLINE_SIZE {
 			// File is too large to inline, return a resource reference
-			resourceURI := pathToResourceURI(validPath)
+			resourceURI := PathToResourceURI(validPath)
 			results = append(results, fmt.Sprintf("File '%s' is too large to display inline (%d bytes). Access it via resource URI: %s",
 				path, info.Size(), resourceURI))
 			continue
@@ -92,13 +92,13 @@ func (s *LocalFS) ReadMultipleFiles(pathsSlice []string) ([]string, error) {
 				// })
 			} else {
 				// Too large for base64, return a reference
-				resourceURI := pathToResourceURI(validPath)
+				resourceURI := PathToResourceURI(validPath)
 				results = append(results, fmt.Sprintf("Image file '%s' is too large to display inline (%d bytes). Access it via resource URI: %s",
 					path, info.Size(), resourceURI))
 			}
 		} else {
 			// It's another type of binary file
-			resourceURI := pathToResourceURI(validPath)
+			resourceURI := PathToResourceURI(validPath)
 
 			if info.Size() <= MAX_BASE64_SIZE {
 				// Small enough for base64 encoding

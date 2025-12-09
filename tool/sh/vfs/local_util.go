@@ -90,8 +90,3 @@ func (s *LocalFS) validatePath(requestedPath string) (string, error) {
 
 	return realPath, nil
 }
-
-// pathToResourceURI converts a file path to a resource URI
-func pathToResourceURI(path string) string {
-	return "file://" + path
-}

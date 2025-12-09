@@ -33,7 +33,7 @@ func (s *LocalFS) WriteFile(path string, content []byte) error {
 		return fmt.Errorf("Error creating parent directories: %v", err)
 	}
 
-	if err := os.WriteFile(validPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(validPath, content, 0644); err != nil {
 		return fmt.Errorf("Error writing file: %v", err)
 	}
 

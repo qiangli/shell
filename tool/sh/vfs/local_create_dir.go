@@ -33,6 +33,5 @@ func (s *LocalFS) CreateDirectory(path string) error {
 		return fmt.Errorf("Error creating directory: %v", err)
 	}
 
-	// resourceURI := pathToResourceURI(validPath)
 	return nil
 }

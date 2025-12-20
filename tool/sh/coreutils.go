@@ -11,6 +11,7 @@ import (
 	"github.com/qiangli/shell/tool/coreutils/core/date"
 	"github.com/qiangli/shell/tool/coreutils/core/dirname"
 	"github.com/qiangli/shell/tool/coreutils/core/head"
+	"github.com/qiangli/shell/tool/coreutils/core/sleep"
 	"github.com/qiangli/shell/tool/coreutils/core/tail"
 	"github.com/qiangli/shell/tool/coreutils/core/wget"
 	"github.com/qiangli/shell/tool/coreutils/exp/tac"
@@ -38,7 +39,6 @@ import (
 // tool/coreutils/core/grep/
 // tool/coreutils/core/md5sum/
 // tool/coreutils/core/seq/
-// tool/coreutils/core/sleep/
 // tool/coreutils/core/sort/
 // tool/coreutils/core/tee/
 // tool/coreutils/core/time/
@@ -51,7 +51,7 @@ import (
 // internal commands
 var CoreUtilsCommands = []string{
 	"base64", "basename", "cat", "chmod", "cp", "date", "dirname", "find", "gzip", "head", "ls", "mkdir",
-	"mktemp", "mv", "rm", "shasum", "tac", "tail", "tar", "touch", "wget", "xargs",
+	"mktemp", "mv", "rm", "shasum", "sleep", "tac", "tail", "tar", "touch", "wget", "xargs",
 }
 
 // bash commands
@@ -147,6 +147,8 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(rm.New())
 	case "shasum":
 		return runCmd(shasum.New())
+	case "sleep":
+		return runCmd(sleep.New())
 	case "tac":
 		return runCmd(tac.New(fs))
 	case "tail":

@@ -31,7 +31,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	// "log"
 	"time"
 
 	"github.com/u-root/u-root/pkg/core"
@@ -89,7 +89,7 @@ func (c *command) Run(args ...string) error {
 func (c *command) RunContext(ctx context.Context, args ...string) error {
 	// var f flags
 
-	fs := flag.NewFlagSet("date", flag.ContinueOnError)
+	fs := flag.NewFlagSet("sleep", flag.ContinueOnError)
 	fs.SetOutput(c.Stderr)
 
 	fs.Usage = func() {
@@ -104,9 +104,15 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	d, err := parseDuration(flag.Arg(0))
+	if fs.NArg() != 1 {
+		// log.Fatal("Incorrect number of arguments")
+		return fmt.Errorf("Incorrect number of arguments")
+	}
+
+	d, err := parseDuration(fs.Arg(0))
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
+		return err
 	}
 
 	time.Sleep(d)

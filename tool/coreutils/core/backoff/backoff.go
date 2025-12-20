@@ -66,6 +66,22 @@ func (c *command) run(_ context.Context, timeout time.Duration, verbose bool, ar
 	return backoff.Retry(f, b)
 }
 
+// func main() {
+// 	flag.Parse()
+// 	if *verbose {
+// 		v = log.Printf
+// 	}
+// 	a := flag.Args()
+// 	if len(a) == 0 {
+// 		flag.Usage()
+// 		os.Exit(1)
+// 	}
+// 	v("Run %q", a)
+// 	if err := run(*timeout, a[0], a[1:]...); err != nil {
+// 		log.Fatalf("Error: %v", err)
+// 	}
+// }
+
 type Callback func([]string) error
 
 type command struct {

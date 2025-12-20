@@ -35,7 +35,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
+	// "log"
 	"os"
 	"os/exec"
 	"strings"
@@ -125,12 +125,9 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 		return err
 	}
 
-	// if err := run(flag.Args(), f.posix, rc, c.Stdout); err != nil {
-	// 	log.Fatalf("date: %v", err)
-	// }
-
-	if err := run(flag.Args(), os.Stdin, os.Stdout, os.Stderr); err != nil {
-		log.Fatalf("time: %v", err)
+	if err := run(fs.Args(), os.Stdin, os.Stdout, os.Stderr); err != nil {
+		// log.Fatalf("time: %v", err)
+		return fmt.Errorf("time: %v", err)
 	}
 
 	return nil

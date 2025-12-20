@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/qiangli/shell/tool/coreutils/core/backoff"
+	// "github.com/qiangli/shell/tool/coreutils/core/backoff"
 	"github.com/qiangli/shell/tool/coreutils/core/basename"
 	"github.com/qiangli/shell/tool/coreutils/core/cat"
 	"github.com/qiangli/shell/tool/coreutils/core/date"
@@ -36,6 +36,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// https://github.com/u-root/u-root/tree/main/cmds/core
 // tool/coreutils/core/cmp/
 //
 // tool/coreutils/core/grep/
@@ -43,7 +44,6 @@ import (
 // tool/coreutils/core/seq/
 // tool/coreutils/core/sort/
 // tool/coreutils/core/tee/
-// tool/coreutils/core/timeout/
 // tool/coreutils/core/truncate/
 // tool/coreutils/core/uniq/
 // tool/coreutils/core/wc/
@@ -69,27 +69,27 @@ func IsCoreUtils(s string) bool {
 	return !slices.Contains(CoreUtilsCommands, s)
 }
 
-func RunBackoff(ctx context.Context, vs *VirtualSystem, args []string) (bool, error) {
-	cb := func(args []string) error {
-		if IsCoreUtils(args[0]) {
-			_, err := RunCoreUtils(ctx, vs, args)
-			return err
-		}
-		// TODO agent/tool support
-		// external commands
-		cmd := vs.System.Command(args[0], args[1:]...)
-		cmd.Stdin, cmd.Stdout, cmd.Stderr = vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr
-		cmd.Args = args
-		cmd.Env = vs.System.Env()
-		cmd.Dir, _ = vs.System.Getwd()
-		err := cmd.Run()
-		return err
-	}
-	cmd := backoff.New(cb)
-	cmd.SetIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)
-	err := cmd.RunContext(ctx, args[1:]...)
-	return true, err
-}
+// func RunBackoff(ctx context.Context, vs *VirtualSystem, args []string) (bool, error) {
+// 	cb := func(args []string) error {
+// 		if IsCoreUtils(args[0]) {
+// 			_, err := RunCoreUtils(ctx, vs, args)
+// 			return err
+// 		}
+// 		// TODO agent/tool support
+// 		// external commands
+// 		cmd := vs.System.Command(args[0], args[1:]...)
+// 		cmd.Stdin, cmd.Stdout, cmd.Stderr = vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr
+// 		cmd.Args = args
+// 		cmd.Env = vs.System.Env()
+// 		cmd.Dir, _ = vs.System.Getwd()
+// 		err := cmd.Run()
+// 		return err
+// 	}
+// 	cmd := backoff.New(cb)
+// 	cmd.SetIO(vs.IOE.Stdin, vs.IOE.Stdout, vs.IOE.Stderr)
+// 	err := cmd.RunContext(ctx, args[1:]...)
+// 	return true, err
+// }
 
 type virtualFS struct {
 	vs *VirtualSystem
@@ -116,6 +116,8 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 	}
 
 	switch args[0] {
+	// case "backoff":
+	// 	return runCmd(backoff.New())
 	case "base64":
 		return runCmd(base64.New())
 	case "basename":

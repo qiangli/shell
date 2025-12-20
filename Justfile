@@ -12,6 +12,9 @@ build-all: tidy
 test:
     go test -short ./...
 
+test-sh:
+    bin/sh script/test.sh
+
 tidy:
     go mod tidy
     go fmt ./...

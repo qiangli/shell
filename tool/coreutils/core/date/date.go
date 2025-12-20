@@ -14,7 +14,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
+	// "log"
 	"os"
 	"regexp"
 	"strconv"
@@ -306,8 +306,9 @@ func (c *command) RunContext(ctx context.Context, args ...string) error {
 	}
 
 	rc := RealClock{}
-	if err := run(flag.Args(), f.universal, f.reference, rc, c.Stdout); err != nil {
-		log.Fatalf("date: %v", err)
+	if err := run(fs.Args(), f.universal, f.reference, rc, c.Stdout); err != nil {
+		//log.Fatalf("date: %v", err)
+		return fmt.Errorf("date: %v", err)
 	}
 
 	return nil

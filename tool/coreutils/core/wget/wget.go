@@ -147,7 +147,8 @@ func (c *cmd) run() error {
 		if err != nil {
 			return err
 		}
-		io.WriteString(c.Stdout, string(b))
+		// io.WriteString(c.Stdout, string(b))
+		io.Writer.Write(c.Stdout, b)
 	} else {
 		if err := uio.ReadIntoFile(reader, c.outputPath); err != nil {
 			return err

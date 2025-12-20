@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -x
+set -xue
+
+pwd
 
 echo "------"
 echo "sub script called!"

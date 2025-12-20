@@ -13,6 +13,8 @@ import (
 	"github.com/qiangli/shell/tool/coreutils/core/head"
 	"github.com/qiangli/shell/tool/coreutils/core/sleep"
 	"github.com/qiangli/shell/tool/coreutils/core/tail"
+	"github.com/qiangli/shell/tool/coreutils/core/time"
+
 	"github.com/qiangli/shell/tool/coreutils/core/wget"
 	"github.com/qiangli/shell/tool/coreutils/exp/tac"
 
@@ -41,7 +43,6 @@ import (
 // tool/coreutils/core/seq/
 // tool/coreutils/core/sort/
 // tool/coreutils/core/tee/
-// tool/coreutils/core/time/
 // tool/coreutils/core/timeout/
 // tool/coreutils/core/truncate/
 // tool/coreutils/core/uniq/
@@ -51,7 +52,7 @@ import (
 // internal commands
 var CoreUtilsCommands = []string{
 	"base64", "basename", "cat", "chmod", "cp", "date", "dirname", "find", "gzip", "head", "ls", "mkdir",
-	"mktemp", "mv", "rm", "shasum", "sleep", "tac", "tail", "tar", "touch", "wget", "xargs",
+	"mktemp", "mv", "rm", "shasum", "sleep", "tac", "tail", "tar", "time", "touch", "wget", "xargs",
 }
 
 // bash commands
@@ -155,6 +156,8 @@ func RunCoreUtils(ctx context.Context, vs *VirtualSystem, args []string) (bool, 
 		return runCmd(tail.New(fs))
 	case "tar":
 		return runCmd(tar.New())
+	case "time":
+		return runCmd(time.New())
 	case "touch":
 		return runCmd(touch.New())
 	case "wget":

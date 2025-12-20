@@ -18,7 +18,9 @@ ai /kit:func --arg name=value --arg name=v1,v2,v3 --arguments "{name:value,}" --
 # TODO
 # bash $PWD/script/sub.sh
 
-sleep 1
+# sleep 1
+
+time sleep 2
 
 echo "done testing!"
 

@@ -80,7 +80,6 @@ func New() core.Command {
 type flags struct {
 }
 
-
 // Run executes the command with a `context.Background()`.
 func (c *command) Run(args ...string) error {
 	return c.RunContext(context.Background(), args...)

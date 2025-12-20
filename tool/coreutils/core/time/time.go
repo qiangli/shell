@@ -28,9 +28,10 @@
 // Bugs:
 //
 //	Time is not reported when exiting due to a signal.
-package main
+package time
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -39,9 +40,12 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/u-root/u-root/pkg/core"
+	"github.com/u-root/u-root/pkg/uroot/unixflag"
 )
 
-var _ = flag.Bool("p", true, "makes time output POSIX.2 compliant")
+// var _ = flag.Bool("p", true, "makes time output POSIX.2 compliant")
 
 func printTime(stderr io.Writer, l string, t time.Duration) {
 	fmt.Fprintf(stderr, "%s\n", label(l, t))
@@ -74,9 +78,60 @@ func run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) err
 	return nil
 }
 
-func main() {
-	flag.Parse()
+// func main() {
+// 	flag.Parse()
+// 	if err := run(flag.Args(), os.Stdin, os.Stdout, os.Stderr); err != nil {
+// 		log.Fatalf("time: %v", err)
+// 	}
+// }
+
+type command struct {
+	core.Base
+}
+
+// New creates a new cat command.
+func New() core.Command {
+	c := &command{}
+	c.Init()
+	return c
+}
+
+type flags struct {
+	posix bool
+}
+
+// Run executes the command with a `context.Background()`.
+func (c *command) Run(args ...string) error {
+	return c.RunContext(context.Background(), args...)
+}
+
+// RunContext executes the command.
+func (c *command) RunContext(ctx context.Context, args ...string) error {
+	var f flags
+
+	fs := flag.NewFlagSet("time", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+
+	fs.BoolVar(&f.posix, "p", true, "makes time output POSIX.2 compliant")
+
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "time [-p] CMD [ARG]...\n\n")
+		fmt.Fprintf(fs.Output(), "After executing CMD, its real, user and system times are printed to\n")
+		fmt.Fprintf(fs.Output(), "stderr in the POSIX format.\n")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(unixflag.ArgsToGoArgs(args)); err != nil {
+		return err
+	}
+
+	// if err := run(flag.Args(), f.posix, rc, c.Stdout); err != nil {
+	// 	log.Fatalf("date: %v", err)
+	// }
+
 	if err := run(flag.Args(), os.Stdin, os.Stdout, os.Stderr); err != nil {
 		log.Fatalf("time: %v", err)
 	}
+
+	return nil
 }

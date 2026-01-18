@@ -82,11 +82,14 @@ func ReadLines(reader io.Reader, number bool, offset int, limit int) (string, er
 
 	startIdx := offset
 	endIdx := startIdx + limit
+	if startIdx < 0 {
+		startIdx = 0
+	}
 	if startIdx >= len(content) {
 		return "", fmt.Errorf("error: line offset %d exceeds file length (%d lines)", offset, len(content))
 	}
 
-	if endIdx > len(content) {
+	if endIdx <= 0 || endIdx > len(content) {
 		endIdx = len(content)
 	}
 

@@ -10,3 +10,7 @@ Agentic shell on the cloud
 [gocurl](https://github.com/ameshkov/gocurl)
 [gojq](https://github.com/itchyny/gojq)
 [goyq](https://github.com/mikefarah/yq)
+
+[lsp](https://go.dev/gopls/)
+[diff](https://pkg.go.dev/github.com/go-git/go-git/v5/utils/diff)
+[k8s](https://github.com/kubernetes/utils/blob/master/diff/diff.go)

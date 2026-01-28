@@ -115,3 +115,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	pack.ag/tftp v1.0.1-0.20181129014014-07909dfbde3c // indirect
 )
+
+replace mvdan.cc/sh/v3 => ./lib/sh

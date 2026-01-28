@@ -1,0 +1,3 @@
+[submodule "lib/sh"]
+	path = lib/sh
+	url = https://github.com/qiangli/sh.git

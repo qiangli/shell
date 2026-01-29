@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/qiangli/shell/tool/sh/vfs"
+	"github.com/qiangli/shell/vfs"
 )
 
 type LocalSystem struct {

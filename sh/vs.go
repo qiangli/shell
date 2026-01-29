@@ -11,8 +11,8 @@ import (
 	"mvdan.cc/sh/v3/interp"
 	"mvdan.cc/sh/v3/syntax"
 
-	"github.com/qiangli/shell/tool/sh/vfs"
-	"github.com/qiangli/shell/tool/sh/vos"
+	"github.com/qiangli/shell/vfs"
+	"github.com/qiangli/shell/vos"
 )
 
 type ExecHandler func(context.Context, []string) (bool, error)

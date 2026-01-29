@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/qiangli/shell/tool/sh"
-	"github.com/qiangli/shell/tool/sh/vfs"
-	"github.com/qiangli/shell/tool/sh/vos"
+	"github.com/qiangli/shell/sh"
+	"github.com/qiangli/shell/vfs"
+	"github.com/qiangli/shell/vos"
 )
 
 func main() {

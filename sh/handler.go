@@ -18,7 +18,7 @@ import (
 	"mvdan.cc/sh/v3/interp"
 	"mvdan.cc/sh/v3/syntax"
 
-	"github.com/qiangli/shell/tool/sh/vfs"
+	"github.com/qiangli/shell/vfs"
 )
 
 func NewDummyExecHandler(vs *VirtualSystem) ExecHandler {

@@ -5,18 +5,18 @@ import (
 	"io/fs"
 	"os"
 
-	// "github.com/qiangli/shell/tool/coreutils/core/backoff"
-	"github.com/qiangli/shell/tool/coreutils/core/basename"
-	"github.com/qiangli/shell/tool/coreutils/core/cat"
-	"github.com/qiangli/shell/tool/coreutils/core/date"
-	"github.com/qiangli/shell/tool/coreutils/core/dirname"
-	"github.com/qiangli/shell/tool/coreutils/core/head"
-	"github.com/qiangli/shell/tool/coreutils/core/sleep"
-	"github.com/qiangli/shell/tool/coreutils/core/tail"
-	"github.com/qiangli/shell/tool/coreutils/core/time"
+	// "github.com/qiangli/shell/tool/core/backoff"
+	"github.com/qiangli/shell/tool/core/basename"
+	"github.com/qiangli/shell/tool/core/cat"
+	"github.com/qiangli/shell/tool/core/date"
+	"github.com/qiangli/shell/tool/core/dirname"
+	"github.com/qiangli/shell/tool/core/head"
+	"github.com/qiangli/shell/tool/core/sleep"
+	"github.com/qiangli/shell/tool/core/tail"
+	"github.com/qiangli/shell/tool/core/time"
 
-	"github.com/qiangli/shell/tool/coreutils/core/wget"
-	"github.com/qiangli/shell/tool/coreutils/exp/tac"
+	"github.com/qiangli/shell/tool/core/tac"
+	"github.com/qiangli/shell/tool/core/wget"
 
 	"github.com/u-root/u-root/pkg/core"
 	"github.com/u-root/u-root/pkg/core/base64"
@@ -37,16 +37,16 @@ import (
 )
 
 // https://github.com/u-root/u-root/tree/main/cmds/core
-// tool/coreutils/core/cmp/
+// tool/core/cmp/
 //
-// tool/coreutils/core/grep/
-// tool/coreutils/core/md5sum/
-// tool/coreutils/core/seq/
-// tool/coreutils/core/sort/
-// tool/coreutils/core/tee/
-// tool/coreutils/core/truncate/
-// tool/coreutils/core/uniq/
-// tool/coreutils/core/wc/
+// tool/core/grep/
+// tool/core/md5sum/
+// tool/core/seq/
+// tool/core/sort/
+// tool/core/tee/
+// tool/core/truncate/
+// tool/core/uniq/
+// tool/core/wc/
 //
 
 // internal commands

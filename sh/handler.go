@@ -210,6 +210,13 @@ func VirtualExecHandler(vs *VirtualSystem) func(next interp.ExecHandlerFunc) int
 	}
 }
 
+func VirtualCallHandlerFunc(vs *VirtualSystem) interp.CallHandlerFunc {
+	return func(ctx context.Context, args []string) ([]string, error) {
+		fmt.Printf("%+v \n", args)
+		return args, nil
+	}
+}
+
 // return true if the last elemment is or ends in sh/bash
 func IsShell(s string) bool {
 	if slices.Contains([]string{"bash", "sh"}, path.Base(s)) {

@@ -129,6 +129,9 @@ func (vs *VirtualSystem) NewRunner(opts ...interp.RunnerOption) (*interp.Runner,
 	interp.StatHandler(VirtualStatHandler(vs))(r)
 
 	//
+	interp.CallHandler(VirtualCallHandlerFunc(vs))(r)
+
+	//
 	var env = vs.System.Env()
 	if len(env) > 0 {
 		interp.Env(expand.ListEnviron(env...))(r)

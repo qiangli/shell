@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "command": "script/test.sh",
+            "name": "Run Script",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
             "name": "shell",
             "type": "go",
             "request": "launch",

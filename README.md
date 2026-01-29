@@ -6,6 +6,7 @@ Agentic shell on the cloud
 
 [elvish](https://github.com/elves/elvish)
 [vfs](https://github.com/C2FO/vfs)
+[u-root](https://github.com/u-root/u-root/tree/main/pkg)
 
 [gocurl](https://github.com/ameshkov/gocurl)
 [gojq](https://github.com/itchyny/gojq)
